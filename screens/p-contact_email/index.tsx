@@ -27,7 +27,7 @@ const ContactEmailScreen = () => {
   };
 
   const handleOpenEmailApp = async () => {
-    const emailUrl = 'mailto:support@machao.com';
+    const emailUrl = 'mailto:1430237147@qq.com';
     try {
       const supported = await Linking.canOpenURL(emailUrl);
       if (supported) {
@@ -44,7 +44,7 @@ const ContactEmailScreen = () => {
     {
       id: 'support',
       title: '客服邮箱',
-      email: 'support@machao.com',
+      email: '1430237147@qq.com',
       icon: 'headset',
       iconColor: '#ef4444',
       backgroundColor: '#fef2f2',
@@ -52,7 +52,7 @@ const ContactEmailScreen = () => {
     {
       id: 'tech',
       title: '技术支持',
-      email: 'tech@machao.com',
+      email: '1430237147@qq.com',
       icon: 'bug',
       iconColor: '#3b82f6',
       backgroundColor: '#eff6ff',
@@ -60,7 +60,7 @@ const ContactEmailScreen = () => {
     {
       id: 'business',
       title: '商务合作',
-      email: 'business@machao.com',
+      email: '1430237147@qq.com',
       icon: 'handshake',
       iconColor: '#10b981',
       backgroundColor: '#f0fdf4',

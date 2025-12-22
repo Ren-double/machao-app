@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "码潮",
-    "slug": "Project 715333040386",
+    "slug": "project-715333040386",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon_downloaded.png",
@@ -16,7 +16,11 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -41,10 +45,17 @@
           "microphonePermission": "Allow 码潮 to access your microphone",
           "recordAudioAndroid": true
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "8dc1f06f-12c3-43ad-bc6e-235f0316295d"
+      }
     }
   }
 }

@@ -5,112 +5,154 @@ import { View, Text, ScrollView, TouchableOpacity, Image, Alert, Linking, } from
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { FontAwesome6 } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Svg, { Defs, Pattern, Path, Rect, Polyline, Circle, Text as SvgText } from 'react-native-svg';
 import styles from './styles';
+import { getRepository, getStarHistory, GitHubProject } from '../../services/github';
 
-interface ProjectData {
-  id: string;
-  name: string;
-  author: string;
-  description: string;
+interface ProjectData extends GitHubProject {
   avatar: string;
-  stars: string;
-  forks: string;
   contributors: string;
-  language: string;
   lastUpdated: string;
-  githubUrl: string;
   docsUrl: string;
-  isBookmarked: boolean;
 }
 
 type TrendPeriod = '7d' | '30d' | '90d';
 
 const ProjectDetailScreen: React.FC = () => {
   const router = useRouter();
-  const { projectId } = useLocalSearchParams<{ projectId: string }>();
+  const params = useLocalSearchParams<{ id: string; owner: string; name: string }>();
   
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [selectedTrendPeriod, setSelectedTrendPeriod] = useState<TrendPeriod>('7d');
+  const [trendData, setTrendData] = useState<{date: string, count: number}[]>([]);
+  const [loadingTrend, setLoadingTrend] = useState(false);
   const [isToastVisible, setIsToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
-  // 模拟项目数据
-  const mockProjects: Record<string, ProjectData> = {
-    'project1': {
-      id: 'project1',
-      name: 'React Query',
-      author: 'TanStack / react-query',
-      description: 'Hooks for fetching, caching and updating asynchronous data in React. React Query makes fetching, caching, synchronizing and updating server state in your React applications a breeze.',
-      avatar: 'https://s.coze.cn/image/xhpzRoBP_Hw/',
-      stars: '35.2k',
-      forks: '2.8k',
-      contributors: '156',
-      language: 'JavaScript',
-      lastUpdated: '2小时前更新',
-      githubUrl: 'https://github.com/TanStack/react-query',
-      docsUrl: 'https://tanstack.com/query/latest',
-      isBookmarked: false,
-    },
-    'project2': {
-      id: 'project2',
-      name: 'FastAPI',
-      author: 'tiangolo / fastapi',
-      description: 'FastAPI framework, high performance, easy to learn, fast to code, ready for production. FastAPI is a modern, fast (high-performance), web framework for building APIs with Python 3.6+ based on standard Python type hints.',
-      avatar: 'https://s.coze.cn/image/qBiRH7UOIOY/',
-      stars: '68.9k',
-      forks: '7.2k',
-      contributors: '342',
-      language: 'Python',
-      lastUpdated: '1天前更新',
-      githubUrl: 'https://github.com/tiangolo/fastapi',
-      docsUrl: 'https://fastapi.tiangolo.com/',
-      isBookmarked: true,
-    },
-    'project3': {
-      id: 'project3',
-      name: 'Spring Boot',
-      author: 'spring-projects / spring-boot',
-      description: 'Spring Boot makes it easy to create stand-alone, production-grade Spring based Applications that you can "just run". We take an opinionated view of the Spring platform and third-party libraries so you can get started with minimum fuss.',
-      avatar: 'https://s.coze.cn/image/IrVYQamDBaw/',
-      stars: '69.1k',
-      forks: '42.3k',
-      contributors: '678',
-      language: 'Java',
-      lastUpdated: '3小时前更新',
-      githubUrl: 'https://github.com/spring-projects/spring-boot',
-      docsUrl: 'https://spring.io/projects/spring-boot',
-      isBookmarked: false,
-    },
-  };
-
   useEffect(() => {
     loadProjectData();
-  }, [projectId]);
+  }, [params.owner, params.name]);
 
   const loadProjectData = async () => {
     try {
       setIsLoading(true);
-      // 模拟API调用延迟
-      await new Promise(resolve => setTimeout(resolve, 500));
       
-      const currentProjectId = projectId || 'project1';
-      const project = mockProjects[currentProjectId];
-      
-      if (project) {
-        setProjectData(project);
-        setIsBookmarked(project.isBookmarked);
-      } else {
-        Alert.alert('错误', '项目未找到');
-        router.back();
+      if (!params.owner || !params.name) {
+         // Fallback for old links or direct access
+         if (params.id && params.id.startsWith('project')) {
+            // It's a mock ID, ignore or handle gracefully
+            Alert.alert('提示', '该项目为演示数据，无法查看详情');
+            router.back();
+            return;
+         }
+         throw new Error('Missing project information');
       }
-    } catch (error) {
+
+      const repo = await getRepository(params.owner, params.name);
+      
+      if (repo) {
+        // Map GitHub data to UI data
+        const mappedData: ProjectData = {
+            ...repo,
+            avatar: `https://github.com/${repo.author}.png`,
+            contributors: 'N/A', // API doesn't return this directly
+            lastUpdated: new Date().toLocaleDateString(), // We don't have updated_at in GitHubProject yet, so use current or fetch more
+            docsUrl: repo.html_url, // Use html_url as docs fallback
+        };
+        
+        setProjectData(mappedData);
+        setIsBookmarked(repo.isBookmarked);
+        
+        // Add to history
+        addToHistory(mappedData);
+
+        // Load Trend Data
+        loadTrendData(params.owner, params.name, repo.stargazers_count);
+      }
+    } catch (error: any) {
       console.error('加载项目数据失败:', error);
-      Alert.alert('错误', '加载项目数据失败');
+      if (error.message === 'ProjectNotFound') {
+        Alert.alert('错误', '项目未找到');
+      } else if (error.message === 'RateLimitExceeded') {
+        Alert.alert('错误', '访问太频繁，请稍后再试');
+      } else if (error.message === 'Network request failed' || error.name === 'TypeError') {
+        Alert.alert('网络错误', '连接失败，请检查网络或VPN设置');
+      } else {
+        Alert.alert('错误', '加载项目数据失败，请重试');
+      }
+      router.back();
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadTrendData = async (owner: string, name: string, totalStars: number) => {
+    setLoadingTrend(true);
+    try {
+      const history = await getStarHistory(owner, name);
+      
+      const gains = new Map<string, number>();
+      history.forEach(ts => {
+        const date = ts.split('T')[0];
+        gains.set(date, (gains.get(date) || 0) + 1);
+      });
+      
+      const points: {date: string, count: number}[] = [];
+      const now = new Date();
+      let currentCount = totalStars;
+      
+      // Calculate for 90 days to cover all periods
+      for (let i = 0; i < 90; i++) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i);
+        const dateStr = d.toISOString().split('T')[0];
+        
+        points.unshift({ date: dateStr, count: currentCount });
+        
+        const gain = gains.get(dateStr) || 0;
+        currentCount -= gain;
+      }
+      
+      setTrendData(points);
+    } catch (e) {
+      console.error('Failed to load trend data', e);
+    } finally {
+      setLoadingTrend(false);
+    }
+  };
+
+  const addToHistory = async (project: ProjectData) => {
+    try {
+      const historyJson = await AsyncStorage.getItem('@browseHistory');
+      let history = historyJson ? JSON.parse(historyJson) : [];
+      
+      // Remove duplicate
+      history = history.filter((item: any) => item.id !== project.id);
+      
+      // Add new item to top
+      const newItem = {
+        id: project.id,
+        title: project.name,
+        owner: project.author,
+        repo: project.repo,
+        description: project.description,
+        stars: project.stars,
+        forks: project.forks,
+        language: project.language,
+        languageColor: '#6b7280', // Default color
+        languageBg: '#f3f4f6',
+        timeAgo: '刚刚'
+      };
+      
+      history.unshift(newItem);
+      if (history.length > 50) history = history.slice(0, 50);
+      
+      await AsyncStorage.setItem('@browseHistory', JSON.stringify(history));
+    } catch (e) {
+      console.error('Failed to save history', e);
     }
   };
 
@@ -122,16 +164,37 @@ const ProjectDetailScreen: React.FC = () => {
     }
   };
 
-  const handleBookmarkPress = () => {
+  const handleBookmarkPress = async () => {
     const newBookmarkedState = !isBookmarked;
     setIsBookmarked(newBookmarkedState);
     
-    if (projectData) {
-      // 更新模拟数据
-      mockProjects[projectData.id].isBookmarked = newBookmarkedState;
+    try {
+      const bookmarksJson = await AsyncStorage.getItem('@bookmarked_projects');
+      let bookmarks = bookmarksJson ? JSON.parse(bookmarksJson) : [];
+      
+      if (newBookmarkedState) {
+        // Add
+        if (projectData) {
+          // Check if already exists
+          if (!bookmarks.some((b: any) => b.id === projectData.id)) {
+            // Simplify data for storage if needed, or store full projectData
+            // For now, store full projectData as it matches the need for list display
+            bookmarks.unshift(projectData);
+          }
+        }
+      } else {
+        // Remove
+        if (projectData) {
+          bookmarks = bookmarks.filter((b: any) => b.id !== projectData.id);
+        }
+      }
+      
+      await AsyncStorage.setItem('@bookmarked_projects', JSON.stringify(bookmarks));
+      showToast(newBookmarkedState ? '收藏成功' : '取消收藏');
+    } catch (e) {
+      console.error('Failed to update bookmarks', e);
+      showToast('操作失败');
     }
-    
-    showToast(newBookmarkedState ? '收藏成功' : '取消收藏');
   };
 
   const showToast = (message: string) => {
@@ -149,11 +212,11 @@ const ProjectDetailScreen: React.FC = () => {
   };
 
   const handleGithubPress = async () => {
-    if (projectData?.githubUrl) {
+    if (projectData?.html_url) {
       try {
-        const supported = await Linking.canOpenURL(projectData.githubUrl);
+        const supported = await Linking.canOpenURL(projectData.html_url);
         if (supported) {
-          await Linking.openURL(projectData.githubUrl);
+          await Linking.openURL(projectData.html_url);
         } else {
           Alert.alert('错误', '无法打开链接');
         }
@@ -193,6 +256,78 @@ const ProjectDetailScreen: React.FC = () => {
       default:
         return styles.languageJavaScript;
     }
+  };
+
+  const renderChart = () => {
+    if (loadingTrend) return <View style={{height: 150, justifyContent: 'center', alignItems: 'center'}}><Text style={{color: '#6b7280'}}>加载趋势数据...</Text></View>;
+    if (trendData.length === 0) return <View style={{height: 150, justifyContent: 'center', alignItems: 'center'}}><Text style={{color: '#6b7280'}}>暂无趋势数据</Text></View>;
+
+    const days = selectedTrendPeriod === '7d' ? 7 : selectedTrendPeriod === '30d' ? 30 : 90;
+    const data = trendData.slice(-days);
+    
+    if (data.length < 2) return <View style={{height: 150, justifyContent: 'center', alignItems: 'center'}}><Text style={{color: '#6b7280'}}>数据不足</Text></View>;
+
+    const width = 300;
+    const height = 150;
+    const padding = 20;
+    
+    const counts = data.map(d => d.count);
+    const min = Math.min(...counts);
+    const max = Math.max(...counts);
+    const range = max - min || 1;
+    
+    const formatYLabel = (val: number) => {
+        if (val >= 1000) return (val/1000).toFixed(1) + 'k';
+        return Math.round(val).toString();
+    };
+
+    const yLabels = [
+        max, 
+        min + range * 0.66, 
+        min + range * 0.33, 
+        min
+    ].map(formatYLabel);
+
+    const points = data.map((d, i) => {
+        const x = (i / (data.length - 1)) * (width - 2 * padding) + padding;
+        const y = height - padding - ((d.count - min) / range) * (height - 2 * padding);
+        return `${x},${y}`;
+    }).join(' ');
+    
+    const dots = data.map((d, i) => {
+        // Show fewer dots for longer periods
+        if (selectedTrendPeriod !== '7d' && i % Math.ceil(data.length / 7) !== 0) return null;
+        
+        const x = (i / (data.length - 1)) * (width - 2 * padding) + padding;
+        const y = height - padding - ((d.count - min) / range) * (height - 2 * padding);
+        return <Circle key={i} cx={x} cy={y} r="3" fill="#2563eb"/>;
+    });
+
+    return (
+        <Svg width="100%" height="150" viewBox={`0 0 ${width} ${height}`}>
+             <Defs>
+                <Pattern id="grid" width="50" height="30" patternUnits="userSpaceOnUse">
+                  <Path d="M 50 0 L 0 0 0 30" fill="none" stroke="#e5e7eb" strokeWidth="0.5"/>
+                </Pattern>
+              </Defs>
+              <Rect width="100%" height="100%" fill="url(#grid)" />
+              
+              <Polyline 
+                fill="none" 
+                stroke="#2563eb" 
+                strokeWidth="2" 
+                strokeLinecap="round"
+                points={points}
+              />
+              
+              {dots}
+              
+              <SvgText x="25" y="25" textAnchor="end" fontSize="10" fill="#6b7280">{yLabels[0]}</SvgText>
+              <SvgText x="25" y="65" textAnchor="end" fontSize="10" fill="#6b7280">{yLabels[1]}</SvgText>
+              <SvgText x="25" y="105" textAnchor="end" fontSize="10" fill="#6b7280">{yLabels[2]}</SvgText>
+              <SvgText x="25" y="145" textAnchor="end" fontSize="10" fill="#6b7280">{yLabels[3]}</SvgText>
+        </Svg>
+    );
   };
 
   if (isLoading) {
@@ -340,47 +475,28 @@ const ProjectDetailScreen: React.FC = () => {
           
           {/* 趋势图表 */}
           <View style={styles.chartContainer}>
-            <Svg width="100%" height="150" viewBox="0 0 300 150">
-              <Defs>
-                <Pattern id="grid" width="50" height="30" patternUnits="userSpaceOnUse">
-                  <Path d="M 50 0 L 0 0 0 30" fill="none" stroke="#e5e7eb" strokeWidth="0.5"/>
-                </Pattern>
-              </Defs>
-              <Rect width="100%" height="100%" fill="url(#grid)" />
-              
-              {/* 趋势线 */}
-              <Polyline 
-                fill="none" 
-                stroke="#2563eb" 
-                strokeWidth="2" 
-                strokeLinecap="round"
-                points="20,120 60,90 100,70 140,60 180,45 220,35 260,25"
-              />
-              
-              {/* 数据点 */}
-              <Circle cx="20" cy="120" r="3" fill="#2563eb"/>
-              <Circle cx="60" cy="90" r="3" fill="#2563eb"/>
-              <Circle cx="100" cy="70" r="3" fill="#2563eb"/>
-              <Circle cx="140" cy="60" r="3" fill="#2563eb"/>
-              <Circle cx="180" cy="45" r="3" fill="#2563eb"/>
-              <Circle cx="220" cy="35" r="3" fill="#2563eb"/>
-              <Circle cx="260" cy="25" r="3" fill="#2563eb"/>
-              
-              {/* Y轴标签 */}
-              <SvgText x="10" y="25" textAnchor="end" fontSize="10" fill="#6b7280">35.2k</SvgText>
-              <SvgText x="10" y="65" textAnchor="end" fontSize="10" fill="#6b7280">34.8k</SvgText>
-              <SvgText x="10" y="105" textAnchor="end" fontSize="10" fill="#6b7280">34.4k</SvgText>
-              <SvgText x="10" y="145" textAnchor="end" fontSize="10" fill="#6b7280">34.0k</SvgText>
-            </Svg>
+            {renderChart()}
           </View>
           
           {/* 今日增长 */}
           <View style={styles.trendGrowthContainer}>
             <View style={styles.trendGrowthLeft}>
-              <FontAwesome6 name="arrow-up" size={14} color="#10b981" />
-              <Text style={styles.trendGrowthText}>今日新增 +120</Text>
+              {(() => {
+                  const days = selectedTrendPeriod === '7d' ? 7 : selectedTrendPeriod === '30d' ? 30 : 90;
+                  const data = trendData.slice(-days);
+                  const growth = data.length >= 2 ? data[data.length - 1].count - data[data.length - 2].count : 0;
+                  const prevGrowth = data.length >= 3 ? data[data.length - 2].count - data[data.length - 3].count : 0;
+                  const percent = prevGrowth !== 0 ? ((growth - prevGrowth) / Math.abs(prevGrowth)) * 100 : 0;
+                  
+                  return (
+                     <>
+                        <FontAwesome6 name={growth >= 0 ? "arrow-up" : "arrow-down"} size={14} color={growth >= 0 ? "#10b981" : "#ef4444"} />
+                        <Text style={styles.trendGrowthText}>今日新增 {growth >= 0 ? '+' : ''}{growth}</Text>
+                        <Text style={styles.trendGrowthPercent}>较昨日 {percent >= 0 ? '+' : ''}{percent.toFixed(1)}%</Text>
+                     </>
+                  );
+              })()}
             </View>
-            <Text style={styles.trendGrowthPercent}>较昨日 +15%</Text>
           </View>
         </View>
 

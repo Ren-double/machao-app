@@ -1,6 +1,6 @@
 
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FontAwesome6 } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import styles from './styles';
+
+const STORAGE_KEY = '@interest_settings';
 
 interface SelectedInterests {
   language: string[];
@@ -40,6 +43,22 @@ const InterestSettingsScreen = () => {
   // 成功提示状态
   const [showSuccessToast, setShowSuccessToast] = useState(false);
 
+  // 加载设置
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      const savedSettings = await AsyncStorage.getItem(STORAGE_KEY);
+      if (savedSettings) {
+        setSelectedInterests(JSON.parse(savedSettings));
+      }
+    } catch (error) {
+      console.error('Failed to load interest settings:', error);
+    }
+  };
+
   // 编程语言数据
   const programmingLanguages = [
     'JavaScript', 'Python', 'Java', 'Go', 'TypeScript', 'C#', 'C++',
@@ -61,20 +80,26 @@ const InterestSettingsScreen = () => {
   }, [router]);
 
   // 保存按钮处理
-  const handleSavePress = useCallback(() => {
-    // 模拟保存操作
-    console.log('保存兴趣设置:', selectedInterests);
-    
-    // 显示成功提示
-    setShowSuccessToast(true);
-    
-    // 2秒后隐藏提示并返回
-    setTimeout(() => {
-      setShowSuccessToast(false);
+  const handleSavePress = useCallback(async () => {
+    // 保存操作
+    try {
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(selectedInterests));
+      console.log('保存兴趣设置:', selectedInterests);
+      
+      // 显示成功提示
+      setShowSuccessToast(true);
+      
+      // 2秒后隐藏提示并返回
       setTimeout(() => {
-        handleBackPress();
-      }, 300);
-    }, 2000);
+        setShowSuccessToast(false);
+        setTimeout(() => {
+          handleBackPress();
+        }, 300);
+      }, 2000);
+    } catch (error) {
+      console.error('Failed to save interest settings:', error);
+      Alert.alert('错误', '保存失败，请重试');
+    }
   }, [selectedInterests, handleBackPress]);
 
   // 添加兴趣

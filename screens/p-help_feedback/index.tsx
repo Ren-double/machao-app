@@ -144,7 +144,7 @@ const HelpFeedbackScreen = () => {
                 </View>
                 <View style={styles.menuItemText}>
                   <Text style={styles.menuItemTitle}>邮件联系</Text>
-                  <Text style={styles.menuItemSubtitle}>support@machao.com</Text>
+                  <Text style={styles.menuItemSubtitle}>1430237147@qq.com</Text>
                 </View>
               </View>
               <FontAwesome6 name="chevron-right" size={14} color="#6b7280" />

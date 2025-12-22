@@ -1,12 +1,15 @@
 
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FontAwesome6 } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import styles from './styles';
 import SettingItem from './components/SettingItem';
+
+const STORAGE_KEY = '@notification_settings';
 
 const NotificationSettingsScreen = () => {
   const router = useRouter();
@@ -20,6 +23,37 @@ const NotificationSettingsScreen = () => {
   const [isSoundNotificationEnabled, setIsSoundNotificationEnabled] = useState(true);
   const [isVibrationNotificationEnabled, setIsVibrationNotificationEnabled] = useState(true);
 
+  // 加载设置
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      const savedSettings = await AsyncStorage.getItem(STORAGE_KEY);
+      if (savedSettings) {
+        const settings = JSON.parse(savedSettings);
+        setIsGeneralNotificationEnabled(settings.general ?? true);
+        setIsMessageNotificationEnabled(settings.message ?? true);
+        setIsActivityNotificationEnabled(settings.activity ?? true);
+        setIsSystemNotificationEnabled(settings.system ?? true);
+        setIsMarketingNotificationEnabled(settings.marketing ?? false);
+        setIsSoundNotificationEnabled(settings.sound ?? true);
+        setIsVibrationNotificationEnabled(settings.vibration ?? true);
+      }
+    } catch (error) {
+      console.error('Failed to load notification settings:', error);
+    }
+  };
+
+  const saveSettings = async (settings: any) => {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    } catch (error) {
+      console.error('Failed to save notification settings:', error);
+    }
+  };
+
   const handleBackPress = () => {
     if (router.canGoBack()) {
       router.back();
@@ -28,41 +62,83 @@ const NotificationSettingsScreen = () => {
 
   const handleGeneralNotificationToggle = (value: boolean) => {
     setIsGeneralNotificationEnabled(value);
-    // 当总开关关闭时，关闭所有子开关
+    
+    const newSettings = {
+      general: value,
+      message: isMessageNotificationEnabled,
+      activity: isActivityNotificationEnabled,
+      system: isSystemNotificationEnabled,
+      marketing: isMarketingNotificationEnabled,
+      sound: isSoundNotificationEnabled,
+      vibration: isVibrationNotificationEnabled,
+    };
+
+    // 当总开关关闭时，关闭所有子开关（视觉上），但保持状态以便重新开启时恢复？
+    // 或者直接修改所有状态？这里沿用原有逻辑：只是关闭
     if (!value) {
-      setIsMessageNotificationEnabled(false);
-      setIsActivityNotificationEnabled(false);
-      setIsSystemNotificationEnabled(false);
-      setIsMarketingNotificationEnabled(false);
-      setIsSoundNotificationEnabled(false);
-      setIsVibrationNotificationEnabled(false);
+        // 原有逻辑是关闭所有状态，这里我们需要决定是“视觉禁用”还是“状态重置”
+        // 原代码逻辑：
+        setIsMessageNotificationEnabled(false);
+        setIsActivityNotificationEnabled(false);
+        setIsSystemNotificationEnabled(false);
+        setIsMarketingNotificationEnabled(false);
+        setIsSoundNotificationEnabled(false);
+        setIsVibrationNotificationEnabled(false);
+        
+        // 更新保存的设置
+        newSettings.message = false;
+        newSettings.activity = false;
+        newSettings.system = false;
+        newSettings.marketing = false;
+        newSettings.sound = false;
+        newSettings.vibration = false;
     }
+    
+    saveSettings(newSettings);
   };
 
   const handleNotificationSettingChange = (
     settingType: string,
     value: boolean
   ) => {
+    let newSettings = {
+      general: isGeneralNotificationEnabled,
+      message: isMessageNotificationEnabled,
+      activity: isActivityNotificationEnabled,
+      system: isSystemNotificationEnabled,
+      marketing: isMarketingNotificationEnabled,
+      sound: isSoundNotificationEnabled,
+      vibration: isVibrationNotificationEnabled,
+    };
+
     switch (settingType) {
       case 'message':
         setIsMessageNotificationEnabled(value);
+        newSettings.message = value;
         break;
       case 'activity':
         setIsActivityNotificationEnabled(value);
+        newSettings.activity = value;
         break;
       case 'system':
         setIsSystemNotificationEnabled(value);
+        newSettings.system = value;
         break;
       case 'marketing':
         setIsMarketingNotificationEnabled(value);
+        newSettings.marketing = value;
         break;
       case 'sound':
         setIsSoundNotificationEnabled(value);
+        newSettings.sound = value;
         break;
       case 'vibration':
         setIsVibrationNotificationEnabled(value);
+        newSettings.vibration = value;
         break;
     }
+    
+    saveSettings(newSettings);
   };
 
   return (

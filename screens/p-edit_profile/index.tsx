@@ -21,17 +21,42 @@ const EditProfileScreen = () => {
   const router = useRouter();
   
   const [profileData, setProfileData] = useState<ProfileData>({
-    nickname: '开发者小王',
+    nickname: '',
     bio: '',
     location: '',
     website: '',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80',
+    avatar: '',
   });
   
   const [isSaving, setIsSaving] = useState(false);
   const [bioCharacterCount, setBioCharacterCount] = useState(0);
   
   const bioInputRef = useRef<TextInput>(null);
+
+  React.useEffect(() => {
+    loadProfileData();
+  }, []);
+
+  const loadProfileData = async () => {
+    try {
+      const savedProfile = await AsyncStorage.getItem('@userProfile');
+      if (savedProfile) {
+        const parsedProfile = JSON.parse(savedProfile);
+        setProfileData(parsedProfile);
+        if (parsedProfile.bio) {
+          setBioCharacterCount(parsedProfile.bio.length);
+        }
+      } else {
+        // 尝试单独读取头像（兼容旧逻辑）
+        const savedAvatar = await AsyncStorage.getItem('@userAvatar');
+        if (savedAvatar) {
+          setProfileData(prev => ({ ...prev, avatar: savedAvatar }));
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load profile:', error);
+    }
+  };
 
   const handleBackPress = () => {
     if (router.canGoBack()) {
@@ -43,11 +68,14 @@ const EditProfileScreen = () => {
     setIsSaving(true);
     
     try {
-      // 模拟保存操作
+      // 模拟保存操作延迟
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // 保存头像到本地存储
-      if (profileData.avatar.startsWith('data:image/')) {
+      // 保存完整个人资料到本地存储
+      await AsyncStorage.setItem('@userProfile', JSON.stringify(profileData));
+      
+      // 同时更新单独的头像存储（保持兼容性）
+      if (profileData.avatar) {
         await AsyncStorage.setItem('@userAvatar', profileData.avatar);
       }
       

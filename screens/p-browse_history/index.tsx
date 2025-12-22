@@ -3,8 +3,9 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, FlatList, RefreshControl, Modal, Alert, } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { FontAwesome6 } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import HistoryCard from './components/HistoryCard';
 import styles from './styles';
 
@@ -25,7 +26,10 @@ interface HistoryItem {
 const BrowseHistoryScreen = () => {
   const router = useRouter();
   
-  const [historyData, setHistoryData] = useState<HistoryItem[]>([
+  const [historyData, setHistoryData] = useState<HistoryItem[]>([]);
+  
+  // 默认数据，用于首次初始化
+  const defaultHistoryData: HistoryItem[] = [
     {
       id: 'project-1',
       title: 'React Query',
@@ -104,12 +108,33 @@ const BrowseHistoryScreen = () => {
       languageBg: '#e0e7ff',
       timeAgo: '昨天',
     },
-  ]);
+  ];
   
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isClearModalVisible, setIsClearModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadHistoryData();
+    }, [])
+  );
+
+  const loadHistoryData = async () => {
+    try {
+      const savedHistory = await AsyncStorage.getItem('@browseHistory');
+      if (savedHistory !== null) {
+        setHistoryData(JSON.parse(savedHistory));
+      } else {
+        // 首次初始化
+        setHistoryData(defaultHistoryData);
+        await AsyncStorage.setItem('@browseHistory', JSON.stringify(defaultHistoryData));
+      }
+    } catch (error) {
+      console.error('Failed to load history:', error);
+    }
+  };
 
   const handleBackPress = useCallback(() => {
     if (router.canGoBack()) {
@@ -123,8 +148,9 @@ const BrowseHistoryScreen = () => {
 
   const handleConfirmClear = useCallback(() => {
     setIsLoading(true);
-    setTimeout(() => {
+    setTimeout(async () => {
       setHistoryData([]);
+      await AsyncStorage.setItem('@browseHistory', JSON.stringify([]));
       setIsClearModalVisible(false);
       setIsLoading(false);
       Alert.alert('提示', '浏览历史已清空');

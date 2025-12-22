@@ -1,6 +1,6 @@
 
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,9 +10,10 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { FontAwesome6 } from '@expo/vector-icons';
 import styles from './styles';
+import { LANGUAGES_DATA, PROJECT_TYPES_DATA } from '../../config/constants';
 
 interface FilterOption {
   value: string;
@@ -29,40 +30,33 @@ interface LanguageOption extends FilterOption {
 
 const CategoryFilterScreen = () => {
   const router = useRouter();
+  const params = useLocalSearchParams();
   
   // 状态管理
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [selectedProjectTypes, setSelectedProjectTypes] = useState<string[]>([]);
+
+  // 初始化状态（从参数中获取）
+  useEffect(() => {
+    if (params.selected_languages && typeof params.selected_languages === 'string') {
+        const languages = params.selected_languages.split(',').filter(l => l.trim() !== '');
+        setSelectedLanguages(languages);
+    }
+    
+    if (params.selected_project_types && typeof params.selected_project_types === 'string') {
+        const types = params.selected_project_types.split(',').filter(t => t.trim() !== '');
+        setSelectedProjectTypes(types);
+    }
+  }, [params.selected_languages, params.selected_project_types]);
+
   const [languageSearchTerm, setLanguageSearchTerm] = useState('');
   const [projectTypeSearchTerm, setProjectTypeSearchTerm] = useState('');
 
   // 编程语言数据
-  const languagesData: LanguageOption[] = [
-    { value: 'JavaScript', label: 'JavaScript', tag: 'JS', tagColor: '#92400e', tagBgColor: '#fef3c7' },
-    { value: 'Python', label: 'Python', tag: 'Py', tagColor: '#1e40af', tagBgColor: '#dbeafe' },
-    { value: 'Java', label: 'Java', tag: 'Jv', tagColor: '#166534', tagBgColor: '#dcfce7' },
-    { value: 'Go', label: 'Go', tag: 'Go', tagColor: '#991b1b', tagBgColor: '#fef2f2' },
-    { value: 'TypeScript', label: 'TypeScript', tag: 'TS', tagColor: '#5b21b6', tagBgColor: '#e0e7ff' },
-    { value: 'Rust', label: 'Rust', tag: 'Rs', tagColor: '#dc2626', tagBgColor: '#fef2f2' },
-    { value: 'C++', label: 'C++', tag: 'C++', tagColor: '#7c3aed', tagBgColor: '#f3e8ff' },
-    { value: 'Swift', label: 'Swift', tag: 'Sw', tagColor: '#0369a1', tagBgColor: '#dbeafe' },
-    { value: 'Kotlin', label: 'Kotlin', tag: 'Kt', tagColor: '#d97706', tagBgColor: '#fef3c7' },
-    { value: 'Dart', label: 'Dart', tag: 'Dt', tagColor: '#0284c7', tagBgColor: '#dbeafe' },
-  ];
+  const languagesData: LanguageOption[] = LANGUAGES_DATA;
 
   // 项目类型数据
-  const projectTypesData: FilterOption[] = [
-    { value: 'Web框架', label: 'Web框架', icon: 'globe', color: '#2563eb' },
-    { value: '工具库', label: '工具库', icon: 'screwdriver-wrench', color: '#10b981' },
-    { value: '应用程序', label: '应用程序', icon: 'mobile-screen', color: '#f59e0b' },
-    { value: '数据库', label: '数据库', icon: 'database', color: '#06b6d4' },
-    { value: '机器学习', label: '机器学习', icon: 'brain', color: '#2563eb' },
-    { value: '区块链', label: '区块链', icon: 'link', color: '#10b981' },
-    { value: '游戏开发', label: '游戏开发', icon: 'gamepad', color: '#f59e0b' },
-    { value: 'DevOps', label: 'DevOps', icon: 'gears', color: '#06b6d4' },
-    { value: 'API服务', label: 'API服务', icon: 'server', color: '#2563eb' },
-    { value: '文档工具', label: '文档工具', icon: 'file-lines', color: '#10b981' },
-  ];
+  const projectTypesData: FilterOption[] = PROJECT_TYPES_DATA;
 
   // 过滤数据
   const filteredLanguages = languagesData.filter(language =>
@@ -81,20 +75,15 @@ const CategoryFilterScreen = () => {
   }, [router]);
 
   const handleConfirmPress = useCallback(() => {
-    const params = new URLSearchParams();
-    if (selectedLanguages.length > 0) {
-      params.append('selected_languages', selectedLanguages.join(','));
-    }
-    if (selectedProjectTypes.length > 0) {
-      params.append('selected_project_types', selectedProjectTypes.join(','));
-    }
-    
-    const queryString = params.toString();
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.push(`/p-home${queryString ? '?' + queryString : ''}`);
-    }
+    // 使用 router.navigate 并传递参数，以确保首页能够接收到更新后的筛选条件并自动刷新
+    // router.back() 无法传递参数更新上一页状态
+    router.navigate({
+      pathname: '/p-home',
+      params: {
+        selected_languages: selectedLanguages.join(','),
+        selected_project_types: selectedProjectTypes.join(',')
+      }
+    });
   }, [router, selectedLanguages, selectedProjectTypes]);
 
   const handleClearAllPress = useCallback(() => {

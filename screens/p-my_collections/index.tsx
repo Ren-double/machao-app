@@ -3,8 +3,9 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, FlatList, RefreshControl, Alert, } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { FontAwesome6 } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import ProjectCard from './components/ProjectCard';
 import styles from './styles';
 
@@ -27,7 +28,10 @@ const MyCollectionsScreen = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [collectionProjects, setCollectionProjects] = useState<Project[]>([
+  const [collectionProjects, setCollectionProjects] = useState<Project[]>([]);
+
+  // 默认数据，用于首次初始化
+  const defaultCollectionProjects: Project[] = [
     {
       id: 'react-query',
       title: 'React Query',
@@ -93,7 +97,41 @@ const MyCollectionsScreen = () => {
       languageBg: '#fef3c7',
       collectedAt: '3周前',
     },
-  ]);
+  ];
+
+  useFocusEffect(
+    useCallback(() => {
+      loadCollectionData();
+    }, [])
+  );
+
+  const loadCollectionData = async () => {
+    try {
+      const savedCollections = await AsyncStorage.getItem('@bookmarked_projects');
+      if (savedCollections !== null) {
+        const parsedData = JSON.parse(savedCollections);
+        // Map data to match local interface if needed
+        const mappedData = parsedData.map((item: any) => ({
+          id: item.id,
+          title: item.name || item.title,
+          owner: item.author || item.owner,
+          repo: item.repo,
+          description: item.description,
+          stars: item.stars,
+          forks: item.forks,
+          language: item.language,
+          languageColor: item.languageColor || '#6b7280',
+          languageBg: item.languageBg || '#f3f4f6',
+          collectedAt: item.collectedAt || '刚刚',
+        }));
+        setCollectionProjects(mappedData);
+      } else {
+        setCollectionProjects([]);
+      }
+    } catch (error) {
+      console.error('Failed to load collections:', error);
+    }
+  };
 
   const handleBackPress = useCallback(() => {
     if (router.canGoBack()) {
@@ -106,8 +144,18 @@ const MyCollectionsScreen = () => {
   }, [isEditing]);
 
   const handleProjectPress = useCallback((projectId: string) => {
-    router.push(`/p-project_detail?projectId=${projectId}`);
-  }, [router]);
+    const project = collectionProjects.find(p => p.id === projectId);
+    if (project) {
+        router.push({
+            pathname: '/p-project_detail',
+            params: {
+                id: project.id,
+                owner: project.owner,
+                name: project.title, // or repo name? usually name is repo name
+            }
+        });
+    }
+  }, [router, collectionProjects]);
 
   const handleBookmarkPress = useCallback((projectId: string) => {
     Alert.alert(
@@ -118,15 +166,28 @@ const MyCollectionsScreen = () => {
         {
           text: '确定',
           style: 'destructive',
-          onPress: () => {
-            setCollectionProjects(prevProjects =>
-              prevProjects.filter(project => project.id !== projectId)
-            );
+          onPress: async () => {
+            const newProjects = collectionProjects.filter(project => project.id !== projectId);
+            setCollectionProjects(newProjects);
+            try {
+              // We need to save the original structure if possible, but here we only have mapped structure.
+              // Ideally we should filter the original list from AsyncStorage, but for now we save what we have.
+              // Warning: This might lose fields not present in local interface if we overwrite.
+              // Better approach: Read, Filter, Save.
+              const savedCollections = await AsyncStorage.getItem('@bookmarked_projects');
+              if (savedCollections) {
+                  const parsed = JSON.parse(savedCollections);
+                  const newSaved = parsed.filter((p: any) => p.id !== projectId);
+                  await AsyncStorage.setItem('@bookmarked_projects', JSON.stringify(newSaved));
+              }
+            } catch (error) {
+              console.error('Failed to save collections:', error);
+            }
           },
         },
       ]
     );
-  }, []);
+  }, [collectionProjects]);
 
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);

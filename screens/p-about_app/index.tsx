@@ -38,15 +38,15 @@ const AboutAppScreen = () => {
   };
 
   const handleWeiboPress = () => {
-    handleSocialPress('微博', 'https://weibo.com');
+    handleSocialPress('微博', '该功能还在开发中，敬请期待');
   };
 
   const handleWechatPress = () => {
-    Alert.alert('微信公众号', '请搜索"码潮科技"关注我们的微信公众号');
+    Alert.alert('微信公众号', '该功能还在开发中，敬请期待');
   };
 
   const handleGithubPress = () => {
-    handleSocialPress('GitHub', 'https://github.com');
+    handleSocialPress('GitHub', 'https://github.com/Ren-double');
   };
 
   return (

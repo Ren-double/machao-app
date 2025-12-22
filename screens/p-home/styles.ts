@@ -84,5 +84,27 @@ export default StyleSheet.create({
     color: '#ffffff',
     marginLeft: 8,
   },
+  searchHeader: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  searchHeaderText: {
+    fontSize: 14,
+    color: '#111827',
+    fontWeight: '500',
+  },
+  clearSearchButton: {
+    padding: 4,
+  },
+  clearSearchText: {
+    fontSize: 14,
+    color: '#2563eb',
+  },
 });
 

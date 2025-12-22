@@ -1,11 +1,14 @@
 
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Switch, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FontAwesome6 } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import styles from './styles';
+
+const STORAGE_KEY = '@data_collection_settings';
 
 const DataCollectionScreen = () => {
   const router = useRouter();
@@ -14,6 +17,33 @@ const DataCollectionScreen = () => {
   const [isUsageDataEnabled, setIsUsageDataEnabled] = useState(true);
   const [isCrashDataEnabled, setIsCrashDataEnabled] = useState(true);
   const [isPersonalizedAdsEnabled, setIsPersonalizedAdsEnabled] = useState(false);
+
+  // 加载设置
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      const savedSettings = await AsyncStorage.getItem(STORAGE_KEY);
+      if (savedSettings) {
+        const settings = JSON.parse(savedSettings);
+        setIsUsageDataEnabled(settings.usage ?? true);
+        setIsCrashDataEnabled(settings.crash ?? true);
+        setIsPersonalizedAdsEnabled(settings.ads ?? false);
+      }
+    } catch (error) {
+      console.error('Failed to load data collection settings:', error);
+    }
+  };
+
+  const saveSettings = async (settings: any) => {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    } catch (error) {
+      console.error('Failed to save data collection settings:', error);
+    }
+  };
 
   const handleBackPress = () => {
     if (router.canGoBack()) {
@@ -48,17 +78,29 @@ const DataCollectionScreen = () => {
 
   const handleUsageDataToggle = (value: boolean) => {
     setIsUsageDataEnabled(value);
-    // 这里可以添加保存设置的逻辑
+    saveSettings({
+      usage: value,
+      crash: isCrashDataEnabled,
+      ads: isPersonalizedAdsEnabled,
+    });
   };
 
   const handleCrashDataToggle = (value: boolean) => {
     setIsCrashDataEnabled(value);
-    // 这里可以添加保存设置的逻辑
+    saveSettings({
+      usage: isUsageDataEnabled,
+      crash: value,
+      ads: isPersonalizedAdsEnabled,
+    });
   };
 
   const handlePersonalizedAdsToggle = (value: boolean) => {
     setIsPersonalizedAdsEnabled(value);
-    // 这里可以添加保存设置的逻辑
+    saveSettings({
+      usage: isUsageDataEnabled,
+      crash: isCrashDataEnabled,
+      ads: value,
+    });
   };
 
   return (

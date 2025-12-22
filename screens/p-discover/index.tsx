@@ -1,6 +1,6 @@
 
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, RefreshControl, Alert, } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -9,6 +9,8 @@ import styles from './styles';
 import CategoryCard from './components/CategoryCard';
 import TopicCard from './components/TopicCard';
 import FeaturedProjectCard from './components/FeaturedProjectCard';
+import { getHotTopics, getTrendingRepositories, GitHubProject } from '../../services/github';
+import { DISCOVER_CATEGORIES } from '../../config/constants';
 
 interface CategoryItem {
   id: string;
@@ -47,59 +49,85 @@ const DiscoverScreen: React.FC = () => {
   const searchInputRef = useRef<TextInput>(null);
   const [searchText, setSearchText] = useState<string>('');
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
-  const [featuredProjects, setFeaturedProjects] = useState<FeaturedProjectItem[]>([
-    {
-      id: '1',
-      title: 'Next.js',
-      owner: 'vercel',
-      repo: 'next.js',
-      description: 'The React Framework for Production',
-      starCount: '112k',
-      forkCount: '19.5k',
-      language: 'JavaScript',
-      languageColor: '#92400e',
-      languageBgColor: '#fef3c7',
-      trendCount: '+2.3k',
-      isBookmarked: false,
-    },
-    {
-      id: '2',
-      title: 'Django',
-      owner: 'django',
-      repo: 'django',
-      description: 'The Web framework for perfectionists with deadlines.',
-      starCount: '71.2k',
-      forkCount: '29.8k',
-      language: 'Python',
-      languageColor: '#1e40af',
-      languageBgColor: '#dbeafe',
-      trendCount: '+1.4k',
-      isBookmarked: false,
-    },
-  ]);
+  const [featuredProjects, setFeaturedProjects] = useState<FeaturedProjectItem[]>([]);
 
-  const categories: CategoryItem[] = [
-    { id: 'frontend', title: '前端', icon: 'code', color: '#2563eb', backgroundColor: '#dbeafe' },
-    { id: 'backend', title: '后端', icon: 'server', color: '#10b981', backgroundColor: '#dcfce7' },
-    { id: 'ai', title: 'AI', icon: 'brain', color: '#8b5cf6', backgroundColor: '#ede9fe' },
-    { id: 'mobile', title: '移动', icon: 'mobile-screen', color: '#ef4444', backgroundColor: '#fee2e2' },
-    { id: 'tools', title: '工具', icon: 'screwdriver-wrench', color: '#f59e0b', backgroundColor: '#fef3c7' },
-    { id: 'devops', title: 'DevOps', icon: 'gears', color: '#6b7280', backgroundColor: '#f3f4f6' },
-    { id: 'data', title: '数据', icon: 'database', color: '#06b6d4', backgroundColor: '#cffafe' },
-    { id: 'more', title: '更多', icon: 'ellipsis', color: '#6b7280', backgroundColor: '#f3f4f6' },
-  ];
+  const categories: CategoryItem[] = DISCOVER_CATEGORIES;
 
-  const topics: TopicItem[] = [
-    { id: '1', title: '#AI编程助手', discussionCount: '1.2k 讨论 · 今日热门', tag: '今日热门', color: '#2563eb', backgroundColor: '#dbeafe' },
-    { id: '2', title: '#前端框架对比', discussionCount: '856 讨论 · 本周热门', tag: '本周热门', color: '#10b981', backgroundColor: '#dcfce7' },
-    { id: '3', title: '#开源贡献指南', discussionCount: '623 讨论 · 本月热门', tag: '本月热门', color: '#8b5cf6', backgroundColor: '#ede9fe' },
-  ];
+  const [topics, setTopics] = useState<TopicItem[]>([]);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    await Promise.all([loadTopics(), loadFeaturedProjects()]);
+  };
+
+  const loadFeaturedProjects = async () => {
+    try {
+      // 获取本周趋势作为精选
+      const projects = await getTrendingRepositories('weekly');
+      const mappedProjects: FeaturedProjectItem[] = projects.slice(0, 5).map(p => ({
+        id: p.id,
+        title: p.name,
+        owner: p.author,
+        repo: p.repo,
+        description: p.description,
+        starCount: p.stars,
+        forkCount: p.forks,
+        language: p.language,
+        languageColor: '#2563eb', // 默认蓝色
+        languageBgColor: '#dbeafe',
+        trendCount: p.dailyStars ? `+${p.dailyStars}` : '',
+        isBookmarked: p.isBookmarked
+      }));
+      setFeaturedProjects(mappedProjects);
+    } catch (error) {
+      console.error('Failed to load featured projects', error);
+    }
+  };
+
+  const loadTopics = async () => {
+    try {
+      const hotTopics = await getHotTopics();
+      if (hotTopics.length > 0) {
+        const mappedTopics: TopicItem[] = hotTopics.map((topic, index) => {
+          const colors = [
+             { color: '#2563eb', bg: '#dbeafe' },
+             { color: '#10b981', bg: '#dcfce7' },
+             { color: '#8b5cf6', bg: '#ede9fe' },
+             { color: '#f59e0b', bg: '#fef3c7' },
+             { color: '#ef4444', bg: '#fee2e2' },
+             { color: '#06b6d4', bg: '#cffafe' },
+          ];
+          const colorSet = colors[index % colors.length];
+          return {
+            id: topic.name,
+            title: `#${topic.display_name || topic.name}`,
+            discussionCount: topic.short_description || '热门话题',
+            tag: 'Hot',
+            color: colorSet.color,
+            backgroundColor: colorSet.bg
+          };
+        });
+        setTopics(mappedTopics);
+      } else {
+         // Fallback to static if fetch fails or empty
+         setTopics([
+            { id: '1', title: '#AI编程助手', discussionCount: '1.2k 讨论 · 今日热门', tag: '今日热门', color: '#2563eb', backgroundColor: '#dbeafe' },
+            { id: '2', title: '#前端框架对比', discussionCount: '856 讨论 · 本周热门', tag: '本周热门', color: '#10b981', backgroundColor: '#dcfce7' },
+            { id: '3', title: '#开源贡献指南', discussionCount: '623 讨论 · 本月热门', tag: '本月热门', color: '#8b5cf6', backgroundColor: '#ede9fe' },
+         ]);
+      }
+    } catch (error) {
+       console.error('Failed to load topics', error);
+    }
+  };
 
   const handleRefresh = async (): Promise<void> => {
     setIsRefreshing(true);
     try {
-      // 模拟刷新数据
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await loadData();
     } catch (error) {
       console.error('刷新失败:', error);
     } finally {
@@ -107,20 +135,44 @@ const DiscoverScreen: React.FC = () => {
     }
   };
 
+  const handleSearch = (): void => {
+    if (searchText.trim()) {
+      router.push(`/p-home?search_keyword=${encodeURIComponent(searchText.trim())}`);
+    }
+  };
+
   const handleSearchButtonPress = (): void => {
-    searchInputRef.current?.focus();
+    handleSearch();
   };
 
   const handleCategoryPress = (category: CategoryItem): void => {
-    Alert.alert('分类选择', `已选择${category.title}分类`);
+    if (category.id === 'more') {
+      router.push('/p-home'); // 暂时跳转到首页
+      return;
+    }
+    // 跳转到首页并搜索相关话题
+    const query = `topic:${category.id}`;
+    router.push(`/p-home?search_keyword=${encodeURIComponent(query)}`);
   };
 
   const handleTopicPress = (topic: TopicItem): void => {
-    Alert.alert('话题查看', `查看话题: ${topic.title}`);
+    // 移除话题前的 # 号
+    const keyword = topic.title.replace(/^#/, '');
+    router.push(`/p-home?search_keyword=${encodeURIComponent(keyword)}`);
   };
 
   const handleProjectPress = (project: FeaturedProjectItem): void => {
-    router.push(`/p-project_detail?project_id=featured-${project.id}`);
+    // 解析 repo 名称 (通常格式为 owner/name)
+    const repoName = project.repo.includes('/') ? project.repo.split('/')[1] : project.repo;
+    
+    router.push({
+      pathname: '/p-project_detail',
+      params: {
+        id: project.id,
+        owner: project.owner,
+        name: repoName
+      }
+    });
   };
 
   const handleBookmarkPress = (projectId: string): void => {
@@ -134,11 +186,11 @@ const DiscoverScreen: React.FC = () => {
   };
 
   const handleViewAllTopicsPress = (): void => {
-    Alert.alert('查看全部', '查看全部话题');
+    router.push('/p-home');
   };
 
   const handleViewAllFeaturedPress = (): void => {
-    router.push('/p-home');
+    router.push({ pathname: '/p-home', params: { tab: 'trending' } });
   };
 
   return (
@@ -174,6 +226,8 @@ const DiscoverScreen: React.FC = () => {
               placeholderTextColor="#6b7280"
               value={searchText}
               onChangeText={setSearchText}
+              returnKeyType="search"
+              onSubmitEditing={handleSearch}
             />
           </View>
         </View>

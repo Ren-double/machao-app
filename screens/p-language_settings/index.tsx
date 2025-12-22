@@ -1,11 +1,14 @@
 
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FontAwesome6 } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import styles from './styles';
+
+const STORAGE_KEY = '@language_settings';
 
 interface LanguageOption {
   id: string;
@@ -18,6 +21,21 @@ interface LanguageOption {
 const LanguageSettingsScreen = () => {
   const router = useRouter();
   const [selectedLanguageId, setSelectedLanguageId] = useState('chinese');
+
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      const savedLanguage = await AsyncStorage.getItem(STORAGE_KEY);
+      if (savedLanguage) {
+        setSelectedLanguageId(savedLanguage);
+      }
+    } catch (error) {
+      console.error('Failed to load language settings:', error);
+    }
+  };
 
   const languageOptions: LanguageOption[] = [
     {
@@ -71,22 +89,29 @@ const LanguageSettingsScreen = () => {
         },
         {
           text: '确定',
-          onPress: () => {
-            setSelectedLanguageId(language.id);
-            Alert.alert(
-              '设置已保存',
-              '语言设置已保存，应用将重启以应用新设置。',
-              [
-                {
-                  text: '确定',
-                  onPress: () => {
-                    if (router.canGoBack()) {
-                      router.back();
-                    }
+          onPress: async () => {
+            try {
+              await AsyncStorage.setItem(STORAGE_KEY, language.id);
+              setSelectedLanguageId(language.id);
+              
+              Alert.alert(
+                '设置已保存',
+                '语言设置已保存，应用将重启以应用新设置。',
+                [
+                  {
+                    text: '确定',
+                    onPress: () => {
+                      if (router.canGoBack()) {
+                        router.back();
+                      }
+                    },
                   },
-                },
-              ]
-            );
+                ]
+              );
+            } catch (error) {
+              console.error('Failed to save language settings:', error);
+              Alert.alert('错误', '保存语言设置失败');
+            }
           },
         },
       ]

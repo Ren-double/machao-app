@@ -10,19 +10,9 @@ import ProjectCard from './components/ProjectCard';
 import TabSelector from './components/TabSelector';
 import TimeFilter from './components/TimeFilter';
 import CategoryFilter from './components/CategoryFilter';
+import { searchRepositories, getTrendingRepositories, GitHubProject } from '../../services/github';
 
-interface Project {
-  id: string;
-  name: string;
-  author: string;
-  repo: string;
-  description: string;
-  stars: string;
-  forks: string;
-  language: string;
-  dailyStars: string;
-  isBookmarked: boolean;
-}
+interface Project extends GitHubProject {}
 
 type TabType = 'daily' | 'trending';
 type TimeFilterType = 'day' | 'week' | 'month';
@@ -35,181 +25,94 @@ const HomeScreen: React.FC = () => {
   const [currentTimeFilter, setCurrentTimeFilter] = useState<TimeFilterType>('day');
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [selectedProjectTypes, setSelectedProjectTypes] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [searchKeyword, setSearchKeyword] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [projectList, setProjectList] = useState<Project[]>([]);
 
   // 模拟项目数据
-  const dailyHotProjects: Project[] = [
-    {
-      id: 'project-1',
-      name: 'React Query',
-      author: 'TanStack',
-      repo: 'react-query',
-      description: 'Hooks for fetching, caching and updating asynchronous data in React',
-      stars: '35.2k',
-      forks: '2.8k',
-      language: 'JavaScript',
-      dailyStars: '+1.2k',
-      isBookmarked: false
-    },
-    {
-      id: 'project-2',
-      name: 'FastAPI',
-      author: 'tiangolo',
-      repo: 'fastapi',
-      description: 'FastAPI framework, high performance, easy to learn, fast to code, ready for production',
-      stars: '68.9k',
-      forks: '7.2k',
-      language: 'Python',
-      dailyStars: '+856',
-      isBookmarked: false
-    },
-    {
-      id: 'project-3',
-      name: 'Spring Boot',
-      author: 'spring-projects',
-      repo: 'spring-boot',
-      description: 'Spring Boot makes it easy to create stand-alone, production-grade Spring based Applications',
-      stars: '69.1k',
-      forks: '42.3k',
-      language: 'Java',
-      dailyStars: '+623',
-      isBookmarked: true
-    },
-    {
-      id: 'project-4',
-      name: 'Gin',
-      author: 'gin-gonic',
-      repo: 'gin',
-      description: 'Gin is a HTTP web framework written in Go (Golang). It features a Martini-like API',
-      stars: '70.3k',
-      forks: '7.8k',
-      language: 'Go',
-      dailyStars: '+445',
-      isBookmarked: false
-    },
-    {
-      id: 'project-5',
-      name: 'Vue.js',
-      author: 'vuejs',
-      repo: 'vue',
-      description: 'The Progressive JavaScript Framework',
-      stars: '205k',
-      forks: '34.2k',
-      language: 'JavaScript',
-      dailyStars: '+1.8k',
-      isBookmarked: false
-    }
-  ];
+  // const dailyHotProjects: Project[] = []; // Removed mock data
+  // const trendingProjects: Record<TimeFilterType, Project[]> = { ... }; // Removed mock data
 
-  const trendingProjects: Record<TimeFilterType, Project[]> = {
-    day: [
-      {
-        id: 'trending-1',
-        name: 'TypeScript',
-        author: 'microsoft',
-        repo: 'TypeScript',
-        description: 'TypeScript is a superset of JavaScript that compiles to clean JavaScript output.',
-        stars: '94.5k',
-        forks: '13.2k',
-        language: 'TypeScript',
-        dailyStars: '+2.1k',
-        isBookmarked: false
-      },
-      {
-        id: 'trending-2',
-        name: 'Rust',
-        author: 'rust-lang',
-        repo: 'rust',
-        description: 'Empowering everyone to build reliable and efficient software.',
-        stars: '89.3k',
-        forks: '12.1k',
-        language: 'Rust',
-        dailyStars: '+1.5k',
-        isBookmarked: false
-      }
-    ],
-    week: [
-      {
-        id: 'trending-3',
-        name: 'TensorFlow',
-        author: 'tensorflow',
-        repo: 'tensorflow',
-        description: 'An Open Source Machine Learning Framework for Everyone',
-        stars: '184k',
-        forks: '88.7k',
-        language: 'C++',
-        dailyStars: '+3.2k',
-        isBookmarked: false
-      },
-      {
-        id: 'trending-4',
-        name: 'Swift',
-        author: 'apple',
-        repo: 'swift',
-        description: 'The Swift Programming Language',
-        stars: '64.8k',
-        forks: '17.3k',
-        language: 'Swift',
-        dailyStars: '+987',
-        isBookmarked: false
-      }
-    ],
-    month: [
-      {
-        id: 'trending-5',
-        name: 'Django',
-        author: 'django',
-        repo: 'django',
-        description: 'The Web framework for perfectionists with deadlines.',
-        stars: '71.2k',
-        forks: '29.8k',
-        language: 'Python',
-        dailyStars: '+1.4k',
-        isBookmarked: false
-      }
-    ]
-  };
 
   useEffect(() => {
     // 解析URL参数
     if (params.selected_languages && typeof params.selected_languages === 'string') {
-      setSelectedLanguages(params.selected_languages.split(','));
+      const languages = params.selected_languages.split(',').filter(l => l.trim() !== '');
+      setSelectedLanguages(languages);
+    } else {
+      // 如果没有参数，清空选择 (应对从筛选页取消所有选择的情况)
+      // 注意：这里可能会导致初始加载时的竞态，但结合下面的防抖应该没事
+      if (params.selected_languages === '') {
+         setSelectedLanguages([]);
+      }
     }
+
     if (params.selected_project_types && typeof params.selected_project_types === 'string') {
-      setSelectedProjectTypes(params.selected_project_types.split(','));
+      const types = params.selected_project_types.split(',').filter(t => t.trim() !== '');
+      setSelectedProjectTypes(types);
+    } else {
+       if (params.selected_project_types === '') {
+         setSelectedProjectTypes([]);
+       }
+    }
+
+    if (params.search_keyword && typeof params.search_keyword === 'string') {
+      setSearchKeyword(params.search_keyword);
+    } else {
+      setSearchKeyword('');
     }
     
-    loadProjectData();
-  }, [params]);
+    // 延迟加载以确保状态更新完成
+    // 使用 setTimeout 避免在渲染期间直接触发副作用导致的循环
+    const timer = setTimeout(() => {
+        loadProjectData();
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, [params.search_keyword, params.selected_languages, params.selected_project_types]);
 
   const loadProjectData = useCallback(async () => {
     setIsLoading(true);
     
     try {
-      // 模拟API调用延迟
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
       let projects: Project[] = [];
       
-      if (currentTab === 'daily') {
-        projects = dailyHotProjects;
+      if (searchKeyword) {
+        // 搜索模式
+        projects = await searchRepositories(searchKeyword);
+      } else if (currentTab === 'daily') {
+        // 每日推荐 (模拟为今日热门)
+        projects = await getTrendingRepositories('daily');
       } else {
-        projects = trendingProjects[currentTimeFilter] || [];
+        // 趋势榜
+        const timeMap: Record<TimeFilterType, 'daily' | 'weekly' | 'monthly'> = {
+          day: 'daily',
+          week: 'weekly',
+          month: 'monthly'
+        };
+        projects = await getTrendingRepositories(timeMap[currentTimeFilter]);
       }
       
-      // 应用筛选条件
-      projects = applyFilters(projects);
+      // 应用本地筛选条件 (语言)
+      if (selectedLanguages.length > 0) {
+        projects = projects.filter(p => selectedLanguages.includes(p.language));
+      }
       
       setProjectList(projects);
-    } catch (error) {
+    } catch (error: any) {
+      if (error.message === 'RATE_LIMIT_EXCEEDED') {
+        Alert.alert('提示', '访问过于频繁，请稍后再试');
+        // 如果是速率限制，不应该清空当前列表，保留旧数据
+        return;
+      }
       Alert.alert('错误', '加载项目数据失败，请重试');
+      console.error(error);
     } finally {
       setIsLoading(false);
     }
-  }, [currentTab, currentTimeFilter, selectedLanguages, selectedProjectTypes]);
+  }, [currentTab, currentTimeFilter, selectedLanguages, selectedProjectTypes, searchKeyword]);
 
   const applyFilters = useCallback((projects: Project[]): Project[] => {
     if (selectedLanguages.length === 0 && selectedProjectTypes.length === 0) {
@@ -239,16 +142,33 @@ const HomeScreen: React.FC = () => {
   }, [loadProjectData]);
 
   const handleCategoryFilterPress = useCallback(() => {
-    router.push('/p-category_filter');
-  }, [router]);
+    router.push({
+      pathname: '/p-category_filter',
+      params: {
+        selected_languages: selectedLanguages.join(','),
+        selected_project_types: selectedProjectTypes.join(',')
+      }
+    });
+  }, [router, selectedLanguages, selectedProjectTypes]);
 
   const handleProfilePress = useCallback(() => {
     router.push('/p-personal_center');
   }, [router]);
 
   const handleProjectPress = useCallback((projectId: string) => {
-    router.push(`/p-project_detail?project_id=${projectId}`);
-  }, [router]);
+    const project = projectList.find(p => p.id === projectId);
+    if (project) {
+      router.push({
+        pathname: '/p-project_detail',
+        params: {
+          id: project.id,
+          owner: project.author,
+          name: project.name,
+          description: project.description // Optional: pass description for immediate display if needed
+        }
+      });
+    }
+  }, [router, projectList]);
 
   const handleBookmarkToggle = useCallback((projectId: string) => {
     setProjectList(prevProjects =>
@@ -286,17 +206,57 @@ const HomeScreen: React.FC = () => {
     setIsLoadingMore(true);
     
     try {
-      // 模拟加载更多数据
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // 加载更多数据
+      // 注意：这里为了简化，仍然使用搜索API，但在实际应用中应该使用分页参数
+      // 由于 GitHub API 限制和分页逻辑的复杂性，这里暂时只演示加载逻辑
+      // 实际项目中需要维护 page 状态
       
-      // 在实际应用中，这里会加载更多项目并添加到列表中
-      console.log('加载更多项目...');
+      const nextPage = Math.floor(projectList.length / 10) + 1;
+      let newProjects: Project[] = [];
+
+      if (searchKeyword) {
+        newProjects = await searchRepositories(searchKeyword, 'stars', 'desc', nextPage);
+      } else {
+         const timeMap: Record<TimeFilterType, 'daily' | 'weekly' | 'monthly'> = {
+          day: 'daily',
+          week: 'weekly',
+          month: 'monthly'
+        };
+        // 每日推荐也使用 trending 逻辑
+        const timeFilter = currentTab === 'daily' ? 'daily' : timeMap[currentTimeFilter];
+        // 对于 trending，我们简单地再次调用（实际应该有分页逻辑，这里 GitHub API 模拟 trending 也是用的 search）
+        // 简单起见，我们假设 searchRepositories 支持分页，我们传递分页参数
+        // 但 getTrendingRepositories 内部调用 searchRepositories 时已经写死了参数
+        // 为了支持分页，我们需要修改 getTrendingRepositories 或直接调用 searchRepositories
+        
+        // 重新构建 trending 的 query
+        const date = new Date();
+        if (timeFilter === 'daily') date.setDate(date.getDate() - 1);
+        else if (timeFilter === 'weekly') date.setDate(date.getDate() - 7);
+        else date.setDate(date.getDate() - 30);
+        
+        const dateString = date.toISOString().split('T')[0];
+        const query = `created:>${dateString}`;
+        newProjects = await searchRepositories(query, 'stars', 'desc', nextPage);
+      }
+
+      // 过滤掉已存在的项目
+      const existingIds = new Set(projectList.map(p => p.id));
+      const uniqueNewProjects = newProjects.filter(p => !existingIds.has(p.id));
+
+      if (uniqueNewProjects.length > 0) {
+        setProjectList(prev => [...prev, ...uniqueNewProjects]);
+        console.log('加载更多项目成功');
+      } else {
+        console.log('没有更多数据了');
+      }
     } catch (error) {
-      Alert.alert('错误', '加载更多数据失败，请重试');
+      console.error('加载更多失败:', error);
+      // 不弹窗打扰用户，只是 console log
     } finally {
       setIsLoadingMore(false);
     }
-  }, [isLoadingMore]);
+  }, [isLoadingMore, projectList.length, searchKeyword, currentTab, currentTimeFilter]);
 
   const renderProjectItem = useCallback(({ item }: { item: Project }) => (
     <ProjectCard
@@ -306,26 +266,52 @@ const HomeScreen: React.FC = () => {
     />
   ), [handleProjectPress, handleBookmarkToggle]);
 
+  const handleClearSearch = useCallback(() => {
+    router.setParams({ search_keyword: '' });
+    setSearchKeyword('');
+  }, [router]);
+
   const renderListHeader = useCallback(() => (
     <View>
-      <TabSelector
-        currentTab={currentTab}
-        onTabChange={handleTabChange}
-      />
-      
-      {currentTab === 'trending' && (
-        <TimeFilter
-          currentTimeFilter={currentTimeFilter}
-          onTimeFilterChange={handleTimeFilterChange}
-        />
+      {searchKeyword ? (
+        <View style={styles.searchHeader}>
+          <Text style={styles.searchHeaderText}>
+            "{searchKeyword}" 的搜索结果
+          </Text>
+          <TouchableOpacity onPress={handleClearSearch} style={styles.clearSearchButton}>
+            <Text style={styles.clearSearchText}>清除搜索</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <>
+          <TabSelector
+            currentTab={currentTab}
+            onTabChange={handleTabChange}
+          />
+          
+          {currentTab === 'trending' && (
+            <TimeFilter
+              currentTimeFilter={currentTimeFilter}
+              onTimeFilterChange={handleTimeFilterChange}
+            />
+          )}
+        </>
       )}
       
       <CategoryFilter
         selectedLanguages={selectedLanguages}
-        onPress={handleCategoryFilterPress}
+        onPress={() => {
+          router.push({
+            pathname: '/p-category_filter',
+            params: {
+              selected_languages: selectedLanguages.join(','),
+              selected_project_types: selectedProjectTypes.join(',')
+            }
+          });
+        }}
       />
     </View>
-  ), [currentTab, currentTimeFilter, selectedLanguages, handleTabChange, handleTimeFilterChange, handleCategoryFilterPress]);
+  ), [currentTab, currentTimeFilter, selectedLanguages, handleTabChange, handleTimeFilterChange, handleCategoryFilterPress, searchKeyword, handleClearSearch]);
 
   const renderListFooter = useCallback(() => {
     if (isLoading) {
