@@ -95,6 +95,9 @@ export default StyleSheet.create({
   grayIconContainer: {
     backgroundColor: '#f9fafb',
   },
+  redIconContainer: {
+    backgroundColor: '#fee2e2',
+  },
   menuItemTextContainer: {
     flex: 1,
   },

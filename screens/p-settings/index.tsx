@@ -1,12 +1,13 @@
 
 
 import React, { useState, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { FontAwesome6 } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import styles from './styles';
+import { deleteUser } from '../../services/auth';
 import DonationModal from '../../components/DonationModal';
 
 const SettingsScreen = () => {
@@ -61,6 +62,36 @@ const SettingsScreen = () => {
 
   const handleDonatePress = () => {
     setIsDonateModalVisible(true);
+  };
+
+  const handlePrivacyPress = () => {
+    router.push('/p-privacy_policy');
+  };
+
+  const handleTermsPress = () => {
+    router.push('/p-terms_of_service');
+  };
+
+  const handleDeleteAccountPress = () => {
+    Alert.alert(
+      '删除账号',
+      '您确定要删除账号吗？此操作无法撤销，您的所有数据（包括收藏和浏览记录）将被永久删除。',
+      [
+        { text: '取消', style: 'cancel' },
+        { 
+          text: '确认删除', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteUser();
+              router.replace('/p-login_register');
+            } catch (error) {
+              Alert.alert('错误', '删除账号失败，请重试');
+            }
+          }
+        }
+      ]
+    );
   };
 
   return (
@@ -119,22 +150,56 @@ const SettingsScreen = () => {
           </View>
         </View>
 
-        {/* 隐私设置 */}
+        {/* 法律条款 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>隐私设置</Text>
+          <Text style={styles.sectionTitle}>法律条款</Text>
           <View style={styles.menuItemsContainer}>
+            <TouchableOpacity 
+              style={styles.menuItem} 
+              onPress={handlePrivacyPress}
+              activeOpacity={0.7}
+            >
+              <View style={styles.menuItemContent}>
+                <View style={[styles.iconContainer, styles.greenIconContainer]}>
+                  <FontAwesome6 name="shield-halved" size={16} color="#10b981" />
+                </View>
+                <View style={styles.menuItemTextContainer}>
+                  <Text style={styles.menuItemTitle}>隐私政策</Text>
+                  <Text style={styles.menuItemSubtitle}>了解我们要收集的信息</Text>
+                </View>
+              </View>
+              <FontAwesome6 name="chevron-right" size={14} color="#6b7280" />
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.menuItem} 
+              onPress={handleTermsPress}
+              activeOpacity={0.7}
+            >
+              <View style={styles.menuItemContent}>
+                <View style={[styles.iconContainer, styles.blueIconContainer]}>
+                  <FontAwesome6 name="file-contract" size={16} color="#3b82f6" />
+                </View>
+                <View style={styles.menuItemTextContainer}>
+                  <Text style={styles.menuItemTitle}>用户协议</Text>
+                  <Text style={styles.menuItemSubtitle}>使用服务的规则条款</Text>
+                </View>
+              </View>
+              <FontAwesome6 name="chevron-right" size={14} color="#6b7280" />
+            </TouchableOpacity>
+
             <TouchableOpacity 
               style={styles.menuItem} 
               onPress={handleDataCollectionPress}
               activeOpacity={0.7}
             >
               <View style={styles.menuItemContent}>
-                <View style={[styles.iconContainer, styles.purpleIconContainer]}>
-                  <FontAwesome6 name="user-shield" size={16} color="#8b5cf6" />
+                <View style={[styles.iconContainer, styles.grayIconContainer]}>
+                  <FontAwesome6 name="database" size={16} color="#6b7280" />
                 </View>
                 <View style={styles.menuItemTextContainer}>
                   <Text style={styles.menuItemTitle}>数据收集</Text>
-                  <Text style={styles.menuItemSubtitle}>管理数据使用权限</Text>
+                  <Text style={styles.menuItemSubtitle}>管理数据收集选项</Text>
                 </View>
               </View>
               <FontAwesome6 name="chevron-right" size={14} color="#6b7280" />
@@ -142,32 +207,9 @@ const SettingsScreen = () => {
           </View>
         </View>
 
-        {/* 支持 */}
+        {/* 关于与帮助 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>支持</Text>
-          <View style={styles.menuItemsContainer}>
-            <TouchableOpacity 
-              style={styles.menuItem} 
-              onPress={handleDonatePress}
-              activeOpacity={0.7}
-            >
-              <View style={styles.menuItemContent}>
-                <View style={[styles.iconContainer, { backgroundColor: '#fee2e2' }]}>
-                  <FontAwesome6 name="heart" size={16} color="#ef4444" />
-                </View>
-                <View style={styles.menuItemTextContainer}>
-                  <Text style={styles.menuItemTitle}>支持我们</Text>
-                  <Text style={styles.menuItemSubtitle}>请作者喝杯咖啡</Text>
-                </View>
-              </View>
-              <FontAwesome6 name="chevron-right" size={14} color="#6b7280" />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* 关于 */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>关于</Text>
+          <Text style={styles.sectionTitle}>关于与帮助</Text>
           <View style={styles.menuItemsContainer}>
             <TouchableOpacity 
               style={styles.menuItem} 
@@ -175,25 +217,64 @@ const SettingsScreen = () => {
               activeOpacity={0.7}
             >
               <View style={styles.menuItemContent}>
-                <View style={[styles.iconContainer, styles.grayIconContainer]}>
-                  <FontAwesome6 name="circle-info" size={16} color="#6b7280" />
+                <View style={[styles.iconContainer, styles.purpleIconContainer]}>
+                  <FontAwesome6 name="circle-info" size={16} color="#8b5cf6" />
                 </View>
                 <View style={styles.menuItemTextContainer}>
-                  <Text style={styles.menuItemTitle}>关于码潮</Text>
+                  <Text style={styles.menuItemTitle}>关于应用</Text>
                   <Text style={styles.menuItemSubtitle}>版本 1.0.0</Text>
+                </View>
+              </View>
+              <FontAwesome6 name="chevron-right" size={14} color="#6b7280" />
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.menuItem} 
+              onPress={handleDonatePress}
+              activeOpacity={0.7}
+            >
+              <View style={styles.menuItemContent}>
+                <View style={[styles.iconContainer, styles.blueIconContainer]}>
+                  <FontAwesome6 name="mug-hot" size={16} color="#3b82f6" />
+                </View>
+                <View style={styles.menuItemTextContainer}>
+                  <Text style={styles.menuItemTitle}>支持我们</Text>
+                  <Text style={styles.menuItemSubtitle}>请开发者喝杯咖啡</Text>
                 </View>
               </View>
               <FontAwesome6 name="chevron-right" size={14} color="#6b7280" />
             </TouchableOpacity>
           </View>
         </View>
-      </ScrollView>
 
-      {/* 捐赠弹窗 */}
-      <DonationModal
-        visible={isDonateModalVisible}
-        onClose={() => setIsDonateModalVisible(false)}
-      />
+        {/* 账户安全 - 危险区域 */}
+        <View style={[styles.section, { marginBottom: 30 }]}>
+          <Text style={styles.sectionTitle}>账户安全</Text>
+          <View style={styles.menuItemsContainer}>
+            <TouchableOpacity 
+              style={styles.menuItem} 
+              onPress={handleDeleteAccountPress}
+              activeOpacity={0.7}
+            >
+              <View style={styles.menuItemContent}>
+                <View style={[styles.iconContainer, styles.redIconContainer]}>
+                  <FontAwesome6 name="trash-can" size={16} color="#ef4444" />
+                </View>
+                <View style={styles.menuItemTextContainer}>
+                  <Text style={[styles.menuItemTitle, { color: '#ef4444' }]}>注销账号</Text>
+                  <Text style={styles.menuItemSubtitle}>永久删除账号和数据</Text>
+                </View>
+              </View>
+              <FontAwesome6 name="chevron-right" size={14} color="#6b7280" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <DonationModal
+          visible={isDonateModalVisible}
+          onClose={() => setIsDonateModalVisible(false)}
+        />
+      </ScrollView>
     </SafeAreaView>
   );
 };

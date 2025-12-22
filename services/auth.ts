@@ -97,6 +97,29 @@ export const logoutUser = async (): Promise<void> => {
   await AsyncStorage.removeItem(CURRENT_USER_KEY);
 };
 
+export const deleteUser = async (): Promise<void> => {
+  const currentUserJson = await AsyncStorage.getItem(CURRENT_USER_KEY);
+  if (!currentUserJson) return;
+
+  const currentUser = JSON.parse(currentUserJson);
+  const username = currentUser.username;
+
+  const usersJson = await AsyncStorage.getItem(USERS_KEY);
+  if (usersJson) {
+    const users = JSON.parse(usersJson);
+    delete users[username];
+    await AsyncStorage.setItem(USERS_KEY, JSON.stringify(users));
+  }
+
+  await AsyncStorage.removeItem(CURRENT_USER_KEY);
+  // Optional: Clear user-specific data like history/bookmarks if they were namespaced
+  // For this MVP, we might leave them or clear them. 
+  // Let's clear common data keys to ensure a fresh start
+  await AsyncStorage.removeItem('@browseHistory');
+  await AsyncStorage.removeItem('@bookmarked_projects');
+  await AsyncStorage.removeItem('@registrationDate');
+};
+
 export const getCurrentUser = async (): Promise<User | null> => {
   try {
     const userJson = await AsyncStorage.getItem(CURRENT_USER_KEY);

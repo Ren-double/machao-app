@@ -41,9 +41,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow 码潮 to access your camera",
-          "microphonePermission": "Allow 码潮 to access your microphone",
-          "recordAudioAndroid": true
+          "cameraPermission": "允许码潮访问您的相机以拍摄头像 / Allow MaChao to access your camera to take a profile picture"
         }
       ],
       "expo-web-browser"
