@@ -54,7 +54,7 @@
 1.  **克隆仓库**
 
     ```bash
-    git clone https://github.com/yourusername/machao-app.git
+    git clone https://github.com/Ren-double/machao-app.git
     cd machao-app
     ```
 
@@ -128,3 +128,9 @@ app_715333040386/
 ## 📄 许可证
 
 本项目采用 MIT 许可证。
+
+## ☕感谢支持
+
+如果觉得项目对您有用的话，可以请作者喝一杯咖啡
+
+![](./README.assets/payment-qr.png)

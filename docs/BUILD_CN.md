@@ -1,6 +1,6 @@
 # Android 构建指南
 
-本指南将帮助您将 Code Wave 项目打包为 Android APK 文件。
+本指南将帮助您将 Machao App 项目打包为 Android APK 文件。
 
 ## 方法一：使用 EAS Build（推荐）
 

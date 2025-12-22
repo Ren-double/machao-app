@@ -17,7 +17,7 @@
 1. **Fork** 本仓库到你的 GitHub 账号。
 2. **Clone** 你的 Fork 到本地：
    ```bash
-   git clone https://github.com/YOUR_USERNAME/code-wave.git
+   git clone https://github.com/YOUR_USERNAME/machao-app.git
    ```
 3. 创建一个新的分支：
    ```bash
