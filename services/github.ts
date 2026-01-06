@@ -16,6 +16,7 @@ export interface GitHubProject {
   dailyStars: string;
   isBookmarked: boolean;
   html_url: string;
+  default_branch: string;
 }
 
 interface GitHubSearchResponse {
@@ -38,6 +39,7 @@ interface GitHubRepo {
   language: string;
   created_at: string;
   updated_at: string;
+  default_branch: string;
 }
 
 const formatNumber = (num: number): string => {
@@ -97,6 +99,7 @@ export const searchRepositories = async (
       dailyStars: '', // GitHub API doesn't provide daily stars directly in search
       isBookmarked: false,
       html_url: repo.html_url,
+      default_branch: repo.default_branch,
     }));
 
     requestCache.set(cacheKey, { data: projects, timestamp: Date.now() });
@@ -109,6 +112,29 @@ export const searchRepositories = async (
     return [];
   }
 };
+
+export const getReadme = async (owner: string, repo: string): Promise<string> => {
+  try {
+    const response = await fetch(`${BASE_URL}/repos/${owner}/${repo}/readme`, {
+      headers: {
+        'Accept': 'application/vnd.github.raw',
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        return '# No README found';
+      }
+      throw new Error(`GitHub API error: ${response.status}`);
+    }
+
+    return await response.text();
+  } catch (error) {
+    console.error('Failed to fetch README:', error);
+    return '# Failed to load README';
+  }
+};
+
 
 export const getTrendingRepositories = async (
   since: 'daily' | 'weekly' | 'monthly' = 'daily',
@@ -169,6 +195,7 @@ export const getRepository = async (owner: string, repo: string): Promise<GitHub
       dailyStars: '',
       isBookmarked: false,
       html_url: data.html_url,
+      default_branch: data.default_branch,
     };
   } catch (error: any) {
     console.error('Failed to fetch repository:', error);

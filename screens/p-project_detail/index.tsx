@@ -54,11 +54,40 @@ const ProjectDetailScreen: React.FC = () => {
       const repo = await getRepository(params.owner, params.name);
       
       if (repo) {
+        // Fetch contributors count
+        let contributorsCount = 'N/A';
+        try {
+          const contributorsUrl = `https://api.github.com/repos/${params.owner}/${params.name}/contributors?per_page=1&anon=true`;
+          const resp = await fetch(contributorsUrl);
+          const linkHeader = resp.headers.get('link');
+          
+          if (linkHeader) {
+            const match = linkHeader.match(/&page=(\d+)>; rel="last"/);
+            if (match) {
+              contributorsCount = match[1];
+            } else {
+              // If no last link, but we have link header, it might be just one page? 
+              // Actually if per_page=1 and there are more, there should be a last link or next link.
+              // If only next, we don't know total. But usually 'last' is present if many pages.
+              // If no 'last' but 'next', it's at least 2.
+              // If no link header, it means count <= 1.
+              contributorsCount = '1+'; 
+            }
+          } else {
+             // No link header means results fit in one page (which is 1 item).
+             // Check if we got any data
+             const data = await resp.json();
+             contributorsCount = Array.isArray(data) ? data.length.toString() : '0';
+          }
+        } catch (e) {
+          console.log('Failed to fetch contributors count', e);
+        }
+
         // Map GitHub data to UI data
         const mappedData: ProjectData = {
             ...repo,
             avatar: `https://github.com/${repo.author}.png`,
-            contributors: 'N/A', // API doesn't return this directly
+            contributors: contributorsCount,
             lastUpdated: new Date().toLocaleDateString(), // We don't have updated_at in GitHubProject yet, so use current or fetch more
             docsUrl: repo.html_url, // Use html_url as docs fallback
         };
@@ -240,6 +269,19 @@ const ProjectDetailScreen: React.FC = () => {
         console.error('打开文档链接失败:', error);
         Alert.alert('错误', '打开链接失败');
       }
+    }
+  };
+
+  const handleReadmePress = () => {
+    if (projectData && params.owner && params.name) {
+      router.push({
+        pathname: '/p-readme',
+        params: {
+          owner: params.owner,
+          repo: params.name,
+          default_branch: projectData.default_branch
+        }
+      });
     }
   };
 
@@ -504,6 +546,13 @@ const ProjectDetailScreen: React.FC = () => {
         <View style={styles.linksCard}>
           <Text style={styles.linksTitle}>相关链接</Text>
           <View style={styles.linksContainer}>
+            <TouchableOpacity style={styles.linkItem} onPress={handleReadmePress}>
+              <View style={styles.linkItemLeft}>
+                <FontAwesome6 name="book-open" size={18} color="#1f2937" />
+                <Text style={styles.linkItemText}>阅读文档 (README)</Text>
+              </View>
+              <FontAwesome6 name="chevron-right" size={14} color="#6b7280" />
+            </TouchableOpacity>
             <TouchableOpacity style={styles.linkItem} onPress={handleGithubPress}>
               <View style={styles.linkItemLeft}>
                 <FontAwesome6 name="github" size={18} color="#1f2937" />

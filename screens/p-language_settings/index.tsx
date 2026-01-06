@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FontAwesome6 } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Updates from 'expo-updates';
 import styles from './styles';
 
 const STORAGE_KEY = '@language_settings';
@@ -100,9 +101,14 @@ const LanguageSettingsScreen = () => {
                 [
                   {
                     text: '确定',
-                    onPress: () => {
-                      if (router.canGoBack()) {
-                        router.back();
+                    onPress: async () => {
+                      try {
+                        await Updates.reloadAsync();
+                      } catch (error) {
+                        // Fallback if reload fails (e.g. in development)
+                        if (router.canGoBack()) {
+                          router.back();
+                        }
                       }
                     },
                   },

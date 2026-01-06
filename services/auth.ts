@@ -10,49 +10,18 @@ export interface User {
   website: string;
   githubId?: string;
   joinDate?: string;
+  lastActive?: string;
 }
 
 const USERS_KEY = '@users_db';
 const CURRENT_USER_KEY = '@userProfile';
 
 export const registerUser = async (username: string, password: string): Promise<User> => {
-  const usersJson = await AsyncStorage.getItem(USERS_KEY);
-  const users: Record<string, User> = usersJson ? JSON.parse(usersJson) : {};
-
-  if (users[username]) {
-    throw new Error('用户名已存在');
-  }
-
-  const newUser: User = {
-    username,
-    password, // Note: In production, hash this!
-    nickname: username,
-    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
-    bio: '这里还没有个人简介...',
-    location: '未知',
-    website: '',
-    joinDate: new Date().toISOString(),
-  };
-
-  users[username] = newUser;
-  await AsyncStorage.setItem(USERS_KEY, JSON.stringify(users));
-  
-  // Login automatically
-  await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(newUser));
-  return newUser;
+  throw new Error('Registration is disabled. Please use GitHub login.');
 };
 
 export const loginUser = async (username: string, password: string): Promise<User> => {
-  const usersJson = await AsyncStorage.getItem(USERS_KEY);
-  const users: Record<string, User> = usersJson ? JSON.parse(usersJson) : {};
-
-  const user = users[username];
-  if (!user || user.password !== password) {
-    throw new Error('用户名或密码错误');
-  }
-
-  await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
-  return user;
+   throw new Error('Password login is disabled. Please use GitHub login.');
 };
 
 export const loginWithGitHub = async (githubProfile: any): Promise<User> => {
@@ -62,7 +31,20 @@ export const loginWithGitHub = async (githubProfile: any): Promise<User> => {
   // Find user by githubId
   let existingUser = Object.values(users).find(u => u.githubId === githubProfile.id.toString());
 
+  const now = new Date().toISOString();
+
   if (existingUser) {
+    // Update existing user info with latest from GitHub
+    existingUser.nickname = githubProfile.name || githubProfile.login;
+    existingUser.avatar = githubProfile.avatar_url;
+    existingUser.bio = githubProfile.bio || existingUser.bio;
+    existingUser.location = githubProfile.location || existingUser.location;
+    existingUser.website = githubProfile.blog || existingUser.website;
+    existingUser.lastActive = githubProfile.updated_at || now; // Use GitHub updated_at or now
+    
+    // Save updated user
+    users[existingUser.username] = existingUser;
+    await AsyncStorage.setItem(USERS_KEY, JSON.stringify(users));
     await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(existingUser));
     return existingUser;
   }
@@ -83,7 +65,8 @@ export const loginWithGitHub = async (githubProfile: any): Promise<User> => {
     location: githubProfile.location || '',
     website: githubProfile.blog || '',
     githubId: githubProfile.id.toString(),
-    joinDate: new Date().toISOString(),
+    joinDate: githubProfile.created_at || now, // Use GitHub created_at
+    lastActive: githubProfile.updated_at || now,
   };
 
   users[finalUsername] = newUser;

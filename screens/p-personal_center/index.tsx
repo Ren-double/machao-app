@@ -18,6 +18,8 @@ interface UserData {
   joinDays: number;
   collectionsCount: number;
   browseCount: number;
+  joinDateStr: string;
+  lastActiveStr: string;
 }
 
 const PersonalCenterScreen = () => {
@@ -35,14 +37,10 @@ const PersonalCenterScreen = () => {
   const loadUserData = async () => {
     try {
       const savedProfile = await AsyncStorage.getItem('@userProfile');
-      let profileUpdate = {};
+      let parsedProfile: any = {};
 
       if (savedProfile) {
-        const parsedProfile = JSON.parse(savedProfile);
-        profileUpdate = {
-          nickname: parsedProfile.nickname,
-          avatar: parsedProfile.avatar,
-        };
+        parsedProfile = JSON.parse(savedProfile);
       } else {
         // 如果没有用户信息，跳转登录（双重保险，通常会被Layout拦截）
         return;
@@ -52,29 +50,44 @@ const PersonalCenterScreen = () => {
       const historyJson = await AsyncStorage.getItem('@browseHistory');
       const bookmarksJson = await AsyncStorage.getItem('@bookmarked_projects');
       
-      // 获取或初始化注册时间
-      let registrationDate = await AsyncStorage.getItem('@registrationDate');
-      if (!registrationDate) {
-        // 如果没有注册时间，记录当前时间为注册时间
-        registrationDate = Date.now().toString();
-        await AsyncStorage.setItem('@registrationDate', registrationDate);
-      }
+      // 计算加入天数和日期字符串
+      let joinTimestamp = Date.now();
+      let joinDateStr = '';
       
-      // 计算加入天数
-      const joinTimestamp = parseInt(registrationDate, 10);
+      if (parsedProfile.joinDate) {
+        const date = new Date(parsedProfile.joinDate);
+        joinTimestamp = date.getTime();
+        joinDateStr = date.toLocaleDateString();
+      } else {
+        // Fallback: use local storage logic
+        let registrationDate = await AsyncStorage.getItem('@registrationDate');
+        if (!registrationDate) {
+          registrationDate = Date.now().toString();
+          await AsyncStorage.setItem('@registrationDate', registrationDate);
+        }
+        joinTimestamp = parseInt(registrationDate, 10);
+        joinDateStr = new Date(joinTimestamp).toLocaleDateString();
+      }
+
       const currentTimestamp = Date.now();
       const diffTime = Math.abs(currentTimestamp - joinTimestamp);
       const joinDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+      
+      const lastActiveStr = parsedProfile.lastActive 
+        ? new Date(parsedProfile.lastActive).toLocaleDateString()
+        : new Date().toLocaleDateString();
 
       const historyCount = historyJson ? JSON.parse(historyJson).length : 0;
       const bookmarksCount = bookmarksJson ? JSON.parse(bookmarksJson).length : 0;
 
       const newUserData: UserData = {
-        nickname: (profileUpdate as any).nickname || '',
-        avatar: (profileUpdate as any).avatar || '',
+        nickname: parsedProfile.nickname || '',
+        avatar: parsedProfile.avatar || '',
         joinDays: joinDays,
         browseCount: historyCount,
         collectionsCount: bookmarksCount,
+        joinDateStr: joinDateStr,
+        lastActiveStr: lastActiveStr,
       };
 
       setUserData(newUserData);
@@ -266,7 +279,12 @@ const PersonalCenterScreen = () => {
                 </View>
                 <View style={styles.userInfoText}>
                   <Text style={styles.userNickname}>{userData!.nickname}</Text>
-                  <Text style={styles.userJoinDate}>加入码潮 {userData!.joinDays} 天</Text>
+                  <Text style={styles.userJoinDate}>注册时间: {userData!.joinDateStr}</Text>
+                  <Text style={[styles.userJoinDate, { marginTop: 2 }]}>上次活跃: {userData!.lastActiveStr}</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#10b981', marginRight: 6 }} />
+                    <Text style={{ fontSize: 12, color: '#10b981' }}>账号状态: 正常</Text>
+                  </View>
                 </View>
             <TouchableOpacity
               style={styles.editProfileButton}

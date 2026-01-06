@@ -5,10 +5,20 @@ import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FontAwesome6 } from '@expo/vector-icons';
+import * as Device from 'expo-device';
 import styles from './styles';
 
 const AccountSecurityScreen = () => {
   const router = useRouter();
+  const [deviceName, setDeviceName] = React.useState('Unknown Device');
+
+  React.useEffect(() => {
+    if (Device.modelName) {
+      setDeviceName(Device.modelName);
+    } else {
+      setDeviceName(`${Device.osName || 'Unknown'} Device`);
+    }
+  }, []);
 
   const handleBackPress = () => {
     if (router.canGoBack()) {
@@ -143,7 +153,7 @@ const AccountSecurityScreen = () => {
               </View>
               <View style={styles.menuItemTextContainer}>
                 <Text style={styles.menuItemTitle}>当前设备</Text>
-                <Text style={styles.menuItemSubtitle}>iPhone 13 Pro</Text>
+                <Text style={styles.menuItemSubtitle}>{deviceName}</Text>
               </View>
             </View>
             <FontAwesome6 name="chevron-right" size={14} color="#6b7280" />

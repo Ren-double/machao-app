@@ -34,17 +34,6 @@ const LoginRegisterScreen: React.FC = () => {
   const router = useRouter();
   
   // State Management
-  const [activeLoginMethod, setActiveLoginMethod] = useState<LoginMethod>('username');
-  const [isRegister, setIsRegister] = useState(false);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  
-  const [formErrors, setFormErrors] = useState<FormErrors>({
-    username: '',
-    password: '',
-  });
-
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
 
@@ -123,39 +112,6 @@ const LoginRegisterScreen: React.FC = () => {
     }
   };
 
-  const handleTabSwitch = (method: LoginMethod) => {
-    setActiveLoginMethod(method);
-    setFormErrors({ username: '', password: '' });
-  };
-
-  const handleUsernameLogin = async () => {
-    if (!username.trim()) {
-      setFormErrors(prev => ({ ...prev, username: '请输入用户名' }));
-      return;
-    }
-    if (!password.trim()) {
-      setFormErrors(prev => ({ ...prev, password: '请输入密码' }));
-      return;
-    }
-
-    setIsLoading(true);
-    setFormErrors({ username: '', password: '' });
-
-    try {
-      if (isRegister) {
-        await registerUser(username, password);
-        Alert.alert('注册成功', '欢迎加入码潮！');
-      } else {
-        await loginUser(username, password);
-      }
-      setIsSuccessModalVisible(true);
-    } catch (error: any) {
-      Alert.alert('操作失败', error.message || '请重试');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleSuccessConfirm = () => {
     setIsSuccessModalVisible(false);
     router.replace('/p-home');
@@ -189,144 +145,25 @@ const LoginRegisterScreen: React.FC = () => {
               </View>
             </View>
 
-            {/* Tabs */}
-            <View style={styles.tabContainer}>
+            {/* GitHub Login Only */}
+            <View style={styles.formContainer}>
+              <View style={styles.githubDescriptionContainer}>
+                <Text style={styles.githubDescription}>使用GitHub账号登录以同步数据</Text>
+              </View>
               <TouchableOpacity
-                style={[
-                  styles.tabButton,
-                  activeLoginMethod === 'username' ? styles.tabButtonActive : styles.tabButtonInactive
-                ]}
-                onPress={() => handleTabSwitch('username')}
+                style={[styles.githubLoginButton, isLoading ? styles.githubLoginButtonDisabled : null]}
+                onPress={() => {
+                  setIsLoading(true);
+                  promptAsync();
+                }}
+                disabled={!request || isLoading}
               >
-                <FontAwesome6 
-                  name="user" 
-                  size={16} 
-                  color={activeLoginMethod === 'username' ? '#ffffff' : '#6b7280'} 
-                  style={styles.tabIcon}
-                />
-                <Text style={[
-                  styles.tabText,
-                  activeLoginMethod === 'username' ? styles.tabTextActive : styles.tabTextInactive
-                ]}>
-                  账号登录
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.tabButton,
-                  activeLoginMethod === 'github' ? styles.tabButtonActive : styles.tabButtonInactive
-                ]}
-                onPress={() => handleTabSwitch('github')}
-              >
-                <FontAwesome6 
-                  name="github" 
-                  size={16} 
-                  color={activeLoginMethod === 'github' ? '#ffffff' : '#6b7280'} 
-                  style={styles.tabIcon}
-                />
-                <Text style={[
-                  styles.tabText,
-                  activeLoginMethod === 'github' ? styles.tabTextActive : styles.tabTextInactive
-                ]}>
-                  GitHub登录
+                <FontAwesome6 name="github" size={20} color="#ffffff" />
+                <Text style={styles.githubLoginButtonText}>
+                  {isLoading ? '授权中...' : 'GitHub登录'}
                 </Text>
               </TouchableOpacity>
             </View>
-
-            {/* Username/Password Form */}
-            {activeLoginMethod === 'username' && (
-              <View style={styles.formContainer}>
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>用户名</Text>
-                  <TextInput
-                    style={[styles.textInput, formErrors.username ? styles.textInputError : null]}
-                    placeholder="请输入用户名"
-                    value={username}
-                    onChangeText={(text) => {
-                      setUsername(text);
-                      if (formErrors.username) setFormErrors(prev => ({ ...prev, username: '' }));
-                    }}
-                    autoCapitalize="none"
-                    placeholderTextColor="#9ca3af"
-                  />
-                  {formErrors.username ? <Text style={styles.errorMessage}>{formErrors.username}</Text> : null}
-                </View>
-                
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>密码</Text>
-                  <TextInput
-                    style={[styles.textInput, formErrors.password ? styles.textInputError : null]}
-                    placeholder="请输入密码"
-                    value={password}
-                    onChangeText={(text) => {
-                      setPassword(text);
-                      if (formErrors.password) setFormErrors(prev => ({ ...prev, password: '' }));
-                    }}
-                    secureTextEntry
-                    placeholderTextColor="#9ca3af"
-                  />
-                  {formErrors.password ? <Text style={styles.errorMessage}>{formErrors.password}</Text> : null}
-                </View>
-
-                {isRegister && (
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>确认密码</Text>
-                    <TextInput
-                      style={styles.textInput}
-                      placeholder="请再次输入密码"
-                      value={confirmPassword}
-                      onChangeText={setConfirmPassword}
-                      secureTextEntry
-                      placeholderTextColor="#9ca3af"
-                    />
-                  </View>
-                )}
-                
-                <TouchableOpacity
-                  style={[styles.loginButton, isLoading ? styles.loginButtonDisabled : null]}
-                  onPress={handleUsernameLogin}
-                  disabled={isLoading}
-                >
-                  {isLoading && (
-                    <FontAwesome6 name="spinner" size={16} color="#ffffff" style={styles.loadingIcon} />
-                  )}
-                  <Text style={styles.loginButtonText}>
-                    {isLoading ? (isRegister ? '注册中...' : '登录中...') : (isRegister ? '立即注册' : '立即登录')}
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                  style={{ marginTop: 16, alignItems: 'center' }}
-                  onPress={() => setIsRegister(!isRegister)}
-                >
-                  <Text style={{ color: '#2563eb' }}>
-                    {isRegister ? '已有账号？去登录' : '没有账号？去注册'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
-            {/* GitHub Login */}
-            {activeLoginMethod === 'github' && (
-              <View style={styles.formContainer}>
-                <View style={styles.githubDescriptionContainer}>
-                  <Text style={styles.githubDescription}>使用GitHub账号快速登录</Text>
-                </View>
-                <TouchableOpacity
-                  style={[styles.githubLoginButton, isLoading ? styles.githubLoginButtonDisabled : null]}
-                  onPress={() => {
-                    setIsLoading(true);
-                    promptAsync();
-                  }}
-                  disabled={!request || isLoading}
-                >
-                  <FontAwesome6 name="github" size={20} color="#ffffff" />
-                  <Text style={styles.githubLoginButtonText}>
-                    {isLoading ? '授权中...' : 'GitHub登录'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            )}
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
