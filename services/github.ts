@@ -113,6 +113,123 @@ export const searchRepositories = async (
   }
 };
 
+export interface GitHubUser {
+  id: string;
+  login: string;
+  avatar_url: string;
+  html_url: string;
+  type: string;
+}
+
+export interface GitHubUserDetails extends GitHubUser {
+  name: string | null;
+  company: string | null;
+  blog: string | null;
+  location: string | null;
+  email: string | null;
+  bio: string | null;
+  public_repos: number;
+  followers: number;
+  following: number;
+  created_at: string;
+}
+
+export const getUserDetails = async (username: string): Promise<GitHubUserDetails | null> => {
+  try {
+    const response = await fetch(`${BASE_URL}/users/${username}`, {
+      headers: {
+        'Accept': 'application/vnd.github.v3+json',
+      },
+    });
+
+    if (response.status === 403 || response.status === 429) {
+       throw new Error('RATE_LIMIT_EXCEEDED');
+    }
+
+    if (!response.ok) return null;
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to get user details:', error);
+    return null;
+  }
+};
+
+export const getUserRepos = async (username: string, page: number = 1): Promise<GitHubProject[]> => {
+  try {
+    const response = await fetch(`${BASE_URL}/users/${username}/repos?sort=updated&page=${page}&per_page=10`, {
+       headers: {
+        'Accept': 'application/vnd.github.v3+json',
+      },
+    });
+    
+    if (response.status === 403 || response.status === 429) {
+       throw new Error('RATE_LIMIT_EXCEEDED');
+    }
+
+    if (!response.ok) throw new Error('Failed to fetch repos');
+    
+    const data: GitHubRepo[] = await response.json();
+     
+    return data.map((repo) => ({
+      id: repo.id.toString(),
+      name: repo.name,
+      author: repo.owner.login,
+      repo: repo.full_name,
+      description: repo.description || 'No description provided',
+      stars: formatNumber(repo.stargazers_count),
+      stargazers_count: repo.stargazers_count,
+      forks: formatNumber(repo.forks_count),
+      language: repo.language || 'Unknown',
+      dailyStars: '',
+      isBookmarked: false,
+      html_url: repo.html_url,
+      default_branch: repo.default_branch,
+    }));
+  } catch (error) {
+    console.error('Failed to get user repos:', error);
+    return [];
+  }
+};
+
+interface GitHubUserSearchResponse {
+  items: GitHubUser[];
+  total_count: number;
+}
+
+export const searchUsers = async (
+  query: string,
+  page: number = 1,
+  perPage: number = 10
+): Promise<GitHubUser[]> => {
+  try {
+    const response = await fetch(
+      `${BASE_URL}/search/users?q=${encodeURIComponent(query)}&page=${page}&per_page=${perPage}`,
+      {
+        headers: {
+          'Accept': 'application/vnd.github.v3+json',
+        },
+      }
+    );
+
+    if (response.status === 403 || response.status === 429) {
+      throw new Error('RATE_LIMIT_EXCEEDED');
+    }
+
+    if (!response.ok) {
+      throw new Error(`GitHub API error: ${response.status}`);
+    }
+
+    const data: GitHubUserSearchResponse = await response.json();
+    return data.items;
+  } catch (error: any) {
+    if (error.message === 'RATE_LIMIT_EXCEEDED') {
+      throw error;
+    }
+    console.error('Failed to search users:', error);
+    return [];
+  }
+};
+
 export const getReadme = async (owner: string, repo: string): Promise<string> => {
   try {
     const response = await fetch(`${BASE_URL}/repos/${owner}/${repo}/readme`, {

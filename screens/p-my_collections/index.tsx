@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { FontAwesome6 } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import i18n from '../../services/i18n';
 import ProjectCard from './components/ProjectCard';
 import styles from './styles';
 
@@ -43,7 +44,7 @@ const MyCollectionsScreen = () => {
       language: 'JavaScript',
       languageColor: '#92400e',
       languageBg: '#fef3c7',
-      collectedAt: '2天前',
+      collectedAt: i18n.t('just_now'),
     },
     {
       id: 'fastapi',
@@ -56,7 +57,7 @@ const MyCollectionsScreen = () => {
       language: 'Python',
       languageColor: '#1e40af',
       languageBg: '#dbeafe',
-      collectedAt: '3天前',
+      collectedAt: i18n.t('just_now'),
     },
     {
       id: 'spring-boot',
@@ -69,7 +70,7 @@ const MyCollectionsScreen = () => {
       language: 'Java',
       languageColor: '#166534',
       languageBg: '#dcfce7',
-      collectedAt: '1周前',
+      collectedAt: i18n.t('just_now'),
     },
     {
       id: 'rust',
@@ -82,7 +83,7 @@ const MyCollectionsScreen = () => {
       language: 'Rust',
       languageColor: '#5b21b6',
       languageBg: '#f3e8ff',
-      collectedAt: '2周前',
+      collectedAt: i18n.t('just_now'),
     },
     {
       id: 'vue',
@@ -95,7 +96,7 @@ const MyCollectionsScreen = () => {
       language: 'JavaScript',
       languageColor: '#92400e',
       languageBg: '#fef3c7',
-      collectedAt: '3周前',
+      collectedAt: i18n.t('just_now'),
     },
   ];
 
@@ -122,7 +123,7 @@ const MyCollectionsScreen = () => {
           language: item.language,
           languageColor: item.languageColor || '#6b7280',
           languageBg: item.languageBg || '#f3f4f6',
-          collectedAt: item.collectedAt || '刚刚',
+          collectedAt: item.collectedAt || i18n.t('just_now'),
         }));
         setCollectionProjects(mappedData);
       } else {
@@ -159,12 +160,12 @@ const MyCollectionsScreen = () => {
 
   const handleBookmarkPress = useCallback((projectId: string) => {
     Alert.alert(
-      '取消收藏',
-      '确定要取消收藏这个项目吗？',
+      i18n.t('unfavorite_confirm_title'),
+      i18n.t('unfavorite_confirm_desc'),
       [
-        { text: '取消', style: 'cancel' },
+        { text: i18n.t('cancel'), style: 'cancel' },
         {
-          text: '确定',
+          text: i18n.t('confirm'),
           style: 'destructive',
           onPress: async () => {
             const newProjects = collectionProjects.filter(project => project.id !== projectId);
@@ -225,12 +226,12 @@ const MyCollectionsScreen = () => {
         <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
           <FontAwesome6 name="arrow-left" size={14} color="#6b7280" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>我的收藏</Text>
+        <Text style={styles.headerTitle}>{i18n.t('my_collections')}</Text>
       </View>
       <View style={styles.headerRight}>
-        <Text style={styles.collectionCount}>共 {collectionProjects.length} 个</Text>
+        <Text style={styles.collectionCount}>{i18n.t('collection_count', { count: collectionProjects.length })}</Text>
         <TouchableOpacity style={styles.editButton} onPress={handleEditPress}>
-          <Text style={styles.editButtonText}>{isEditing ? '完成' : '编辑'}</Text>
+          <Text style={styles.editButtonText}>{isEditing ? i18n.t('done') : i18n.t('edit')}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -243,10 +244,10 @@ const MyCollectionsScreen = () => {
           <View style={styles.emptyStateIcon}>
             <FontAwesome6 name="heart" size={24} color="#6b7280" />
           </View>
-          <Text style={styles.emptyStateTitle}>暂无收藏项目</Text>
-          <Text style={styles.emptyStateDescription}>去发现页面寻找你感兴趣的项目吧</Text>
+          <Text style={styles.emptyStateTitle}>{i18n.t('no_collections')}</Text>
+          <Text style={styles.emptyStateDescription}>{i18n.t('go_discover_desc')}</Text>
           <TouchableOpacity style={styles.goDiscoverButton} onPress={handleGoDiscover}>
-            <Text style={styles.goDiscoverButtonText}>去发现</Text>
+            <Text style={styles.goDiscoverButtonText}>{i18n.t('go_discover')}</Text>
           </TouchableOpacity>
         </View>
       );
@@ -262,7 +263,7 @@ const MyCollectionsScreen = () => {
           {isLoadingMore && (
             <FontAwesome6 name="spinner" size={12} color="#ffffff" style={styles.loadingIcon} />
           )}
-          <Text style={styles.loadMoreButtonText}>加载更多</Text>
+          <Text style={styles.loadMoreButtonText}>{i18n.t('load_more')}</Text>
         </TouchableOpacity>
       </View>
     );

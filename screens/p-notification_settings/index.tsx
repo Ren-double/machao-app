@@ -1,5 +1,5 @@
 
-
+import i18n from '../../services/i18n';
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -152,20 +152,20 @@ const NotificationSettingsScreen = () => {
         >
           <FontAwesome6 name="chevron-left" size={16} color="#111827" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>通知设置</Text>
+        <Text style={styles.headerTitle}>{i18n.t('notification_settings')}</Text>
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* 通知开关 */}
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>通知开关</Text>
+          <Text style={styles.sectionTitle}>{i18n.t('notification_switch')}</Text>
           <View style={styles.sectionContent}>
             <SettingItem
               icon="bell"
               iconColor="#3b82f6"
               iconBackgroundColor="#dbeafe"
-              title="接收通知"
-              description="开启后接收应用通知"
+              title={i18n.t('receive_notifications')}
+              description={i18n.t('receive_notifications_desc')}
               isEnabled={isGeneralNotificationEnabled}
               onToggle={handleGeneralNotificationToggle}
             />
@@ -174,32 +174,32 @@ const NotificationSettingsScreen = () => {
 
         {/* 通知类型 */}
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>通知类型</Text>
+          <Text style={styles.sectionTitle}>{i18n.t('notification_types')}</Text>
           <View style={styles.sectionContent}>
             <SettingItem
-              title="消息通知"
-              description="接收新消息提醒"
+              title={i18n.t('message_notification')}
+              description={i18n.t('message_notification_desc')}
               isEnabled={isMessageNotificationEnabled}
               onToggle={(value) => handleNotificationSettingChange('message', value)}
               disabled={!isGeneralNotificationEnabled}
             />
             <SettingItem
-              title="活动通知"
-              description="接收点赞、评论等提醒"
+              title={i18n.t('activity_notification')}
+              description={i18n.t('activity_notification_desc')}
               isEnabled={isActivityNotificationEnabled}
               onToggle={(value) => handleNotificationSettingChange('activity', value)}
               disabled={!isGeneralNotificationEnabled}
             />
             <SettingItem
-              title="系统通知"
-              description="接收系统更新、维护等提醒"
+              title={i18n.t('system_notification')}
+              description={i18n.t('system_notification_desc')}
               isEnabled={isSystemNotificationEnabled}
               onToggle={(value) => handleNotificationSettingChange('system', value)}
               disabled={!isGeneralNotificationEnabled}
             />
             <SettingItem
-              title="营销通知"
-              description="接收活动、优惠等信息"
+              title={i18n.t('marketing_notification')}
+              description={i18n.t('marketing_notification_desc')}
               isEnabled={isMarketingNotificationEnabled}
               onToggle={(value) => handleNotificationSettingChange('marketing', value)}
               disabled={!isGeneralNotificationEnabled}
@@ -210,18 +210,18 @@ const NotificationSettingsScreen = () => {
 
         {/* 通知方式 */}
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>通知方式</Text>
+          <Text style={styles.sectionTitle}>{i18n.t('notification_method')}</Text>
           <View style={styles.sectionContent}>
             <SettingItem
-              title="声音提醒"
-              description="收到通知时播放声音"
+              title={i18n.t('sound_notification')}
+              description={i18n.t('sound_notification_desc')}
               isEnabled={isSoundNotificationEnabled}
               onToggle={(value) => handleNotificationSettingChange('sound', value)}
               disabled={!isGeneralNotificationEnabled}
             />
             <SettingItem
-              title="振动提醒"
-              description="收到通知时设备振动"
+              title={i18n.t('vibration_notification')}
+              description={i18n.t('vibration_notification_desc')}
               isEnabled={isVibrationNotificationEnabled}
               onToggle={(value) => handleNotificationSettingChange('vibration', value)}
               disabled={!isGeneralNotificationEnabled}

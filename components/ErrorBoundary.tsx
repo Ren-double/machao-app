@@ -1,6 +1,7 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
 import { FontAwesome6 } from '@expo/vector-icons';
+import i18n from '../services/i18n';
 
 interface Props {
   children: ReactNode;
@@ -35,15 +36,15 @@ class ErrorBoundary extends Component<Props, State> {
         <SafeAreaView style={styles.container}>
           <View style={styles.content}>
             <FontAwesome6 name="triangle-exclamation" size={64} color="#ef4444" />
-            <Text style={styles.title}>哎呀，出错了</Text>
+            <Text style={styles.title}>{i18n.t('oops_error')}</Text>
             <Text style={styles.message}>
-              我们遇到了一些问题，请稍后重试。
+              {i18n.t('error_desc')}
             </Text>
             <Text style={styles.errorText}>
               {this.state.error?.message}
             </Text>
             <TouchableOpacity style={styles.button} onPress={this.handleRetry}>
-              <Text style={styles.buttonText}>重试</Text>
+              <Text style={styles.buttonText}>{i18n.t('retry')}</Text>
             </TouchableOpacity>
           </View>
         </SafeAreaView>

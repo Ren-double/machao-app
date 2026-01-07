@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import { FontAwesome6 } from '@expo/vector-icons';
 import FaqItem from './components/FaqItem';
 import styles from './styles';
+import i18n from '../../services/i18n';
 
 interface FaqData {
   id: string;
@@ -20,28 +21,28 @@ const AccountIssueScreen = () => {
   const faqData: FaqData[] = [
     {
       id: '1',
-      question: '如何注册新账户？',
-      answer: '您可以通过以下步骤注册新账户：\n1. 打开码潮应用\n2. 点击"注册"按钮\n3. 输入您的邮箱地址和设置密码\n4. 点击"获取验证码"，并输入收到的验证码\n5. 点击"完成注册"即可'
+      question: i18n.t('account_faq_1_q'),
+      answer: i18n.t('account_faq_1_a')
     },
     {
       id: '2',
-      question: '忘记密码怎么办？',
-      answer: '如果您忘记了密码，可以通过以下步骤重置：\n1. 在登录页面点击"忘记密码"\n2. 输入您注册时使用的邮箱地址\n3. 点击"获取验证码"，并输入收到的验证码\n4. 设置新密码并确认\n5. 点击"重置密码"完成操作'
+      question: i18n.t('account_faq_2_q'),
+      answer: i18n.t('account_faq_2_a')
     },
     {
       id: '3',
-      question: '如何修改个人资料？',
-      answer: '修改个人资料的步骤如下：\n1. 登录您的账户\n2. 进入"个人中心"\n3. 点击"编辑资料"\n4. 修改您需要更新的信息，如头像、昵称等\n5. 点击"保存"完成修改'
+      question: i18n.t('account_faq_3_q'),
+      answer: i18n.t('account_faq_3_a')
     },
     {
       id: '4',
-      question: '如何绑定/解绑第三方账号？',
-      answer: '绑定/解绑第三方账号的方法：\n1. 登录您的账户\n2. 进入"个人中心"\n3. 点击"账号安全"\n4. 在第三方账号绑定区域，点击"绑定"或"解绑"按钮\n5. 按照提示完成操作'
+      question: i18n.t('account_faq_4_q'),
+      answer: i18n.t('account_faq_4_a')
     },
     {
       id: '5',
-      question: '如何注销账户？',
-      answer: '注销账户前请谨慎考虑，注销后账户数据将无法恢复。注销步骤：\n1. 登录您的账户\n2. 进入"个人中心"\n3. 点击"账号安全"\n4. 点击"注销账户"\n5. 按照提示完成注销流程'
+      question: i18n.t('account_faq_5_q'),
+      answer: i18n.t('account_faq_5_a')
     }
   ];
 
@@ -66,7 +67,7 @@ const AccountIssueScreen = () => {
         >
           <FontAwesome6 name="chevron-left" size={16} color="#111827" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>账户问题</Text>
+        <Text style={styles.headerTitle}>{i18n.t('account_issue_title')}</Text>
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -84,13 +85,13 @@ const AccountIssueScreen = () => {
 
         {/* 联系支持 */}
         <View style={styles.contactSection}>
-          <Text style={styles.contactDescription}>还有其他问题？</Text>
+          <Text style={styles.contactDescription}>{i18n.t('still_have_questions')}</Text>
           <TouchableOpacity 
             style={styles.contactButton} 
             onPress={handleContactSupportPress}
             activeOpacity={0.8}
           >
-            <Text style={styles.contactButtonText}>联系客服</Text>
+            <Text style={styles.contactButtonText}>{i18n.t('contact_support')}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

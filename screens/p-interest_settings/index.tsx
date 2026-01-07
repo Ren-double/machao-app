@@ -1,5 +1,5 @@
 
-
+import i18n from '../../services/i18n';
 import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
@@ -211,41 +211,41 @@ const InterestSettingsScreen = () => {
           <FontAwesome6 name="arrow-left" size={14} color="#6b7280" />
         </TouchableOpacity>
         
-        <Text style={styles.headerTitle}>兴趣设置</Text>
+        <Text style={styles.headerTitle}>{i18n.t('interest_settings')}</Text>
         
         <TouchableOpacity
           style={styles.saveButton}
           onPress={handleSavePress}
           activeOpacity={0.7}
         >
-          <Text style={styles.saveButtonText}>保存</Text>
+          <Text style={styles.saveButtonText}>{i18n.t('save')}</Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* 已选兴趣展示区 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>已选兴趣</Text>
+          <Text style={styles.sectionTitle}>{i18n.t('selected_interests')}</Text>
           
           {allSelectedInterests.length > 0 ? (
             <View style={styles.selectedInterestsContainer}>
               {allSelectedInterests.map(renderSelectedInterestTag)}
             </View>
           ) : (
-            <Text style={styles.noSelectedText}>还没有选择任何兴趣，开始选择吧！</Text>
+            <Text style={styles.noSelectedText}>{i18n.t('no_selected_interests')}</Text>
           )}
         </View>
 
         {/* 编程语言选择 */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>编程语言</Text>
-            <Text style={styles.sectionCount}>已选 {selectedInterests.language.length} 个</Text>
+            <Text style={styles.sectionTitle}>{i18n.t('programming_languages')}</Text>
+            <Text style={styles.sectionCount}>{i18n.t('selected_count', { count: selectedInterests.language.length })}</Text>
           </View>
           
           <TextInput
             style={styles.searchInput}
-            placeholder="搜索编程语言..."
+            placeholder={i18n.t('search_languages_placeholder')}
             value={languageSearchQuery}
             onChangeText={setLanguageSearchQuery}
             placeholderTextColor="#9ca3af"
@@ -259,13 +259,13 @@ const InterestSettingsScreen = () => {
         {/* 项目类型选择 */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>项目类型</Text>
-            <Text style={styles.sectionCount}>已选 {selectedInterests.project_type.length} 个</Text>
+            <Text style={styles.sectionTitle}>{i18n.t('project_types')}</Text>
+            <Text style={styles.sectionCount}>{i18n.t('selected_count', { count: selectedInterests.project_type.length })}</Text>
           </View>
           
           <TextInput
             style={styles.searchInput}
-            placeholder="搜索项目类型..."
+            placeholder={i18n.t('search_project_types_placeholder')}
             value={projectTypeSearchQuery}
             onChangeText={setProjectTypeSearchQuery}
             placeholderTextColor="#9ca3af"
@@ -281,7 +281,7 @@ const InterestSettingsScreen = () => {
       {showSuccessToast && (
         <View style={styles.successToast}>
           <FontAwesome6 name="circle-check" size={16} color="#ffffff" />
-          <Text style={styles.successToastText}>保存成功</Text>
+          <Text style={styles.successToastText}>{i18n.t('save_success')}</Text>
         </View>
       )}
     </SafeAreaView>

@@ -4,6 +4,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { FontAwesome6 } from '@expo/vector-icons';
 import styles from './styles';
+import i18n from '../../../../services/i18n';
 
 type TabType = 'daily' | 'trending';
 
@@ -38,7 +39,7 @@ const TabSelector: React.FC<TabSelectorProps> = ({
               currentTab === 'daily' ? styles.tabTextActive : styles.tabTextInactive
             ]}
           >
-            每日新增
+            {i18n.t('tab_daily')}
           </Text>
         </TouchableOpacity>
         
@@ -61,7 +62,7 @@ const TabSelector: React.FC<TabSelectorProps> = ({
               currentTab === 'trending' ? styles.tabTextActive : styles.tabTextInactive
             ]}
           >
-            热门项目
+            {i18n.t('tab_trending')}
           </Text>
         </TouchableOpacity>
       </View>

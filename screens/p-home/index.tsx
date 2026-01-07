@@ -3,19 +3,23 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, FlatList, RefreshControl, Alert, } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { FontAwesome6 } from '@expo/vector-icons';
 import styles from './styles';
 import ProjectCard from './components/ProjectCard';
+import UserCard from './components/UserCard';
 import TabSelector from './components/TabSelector';
 import TimeFilter from './components/TimeFilter';
 import CategoryFilter from './components/CategoryFilter';
-import { searchRepositories, getTrendingRepositories, GitHubProject } from '../../services/github';
+import { searchRepositories, getTrendingRepositories, searchUsers, GitHubProject, GitHubUser } from '../../services/github';
+import { getBookmarks, addBookmark, removeBookmark, BookmarkProject } from '../../services/bookmarks';
+import i18n from '../../services/i18n';
 
 interface Project extends GitHubProject {}
 
 type TabType = 'daily' | 'trending';
 type TimeFilterType = 'day' | 'week' | 'month';
+type SearchType = 'repo' | 'user' | 'lang';
 
 const HomeScreen: React.FC = () => {
   const router = useRouter();
@@ -26,10 +30,11 @@ const HomeScreen: React.FC = () => {
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [selectedProjectTypes, setSelectedProjectTypes] = useState<string[]>([]);
   const [searchKeyword, setSearchKeyword] = useState<string>('');
+  const [searchType, setSearchType] = useState<SearchType>('repo');
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [projectList, setProjectList] = useState<Project[]>([]);
+  const [dataList, setDataList] = useState<(Project | GitHubUser)[]>([]);
 
   // 模拟项目数据
   // const dailyHotProjects: Project[] = []; // Removed mock data
@@ -77,14 +82,22 @@ const HomeScreen: React.FC = () => {
     setIsLoading(true);
     
     try {
-      let projects: Project[] = [];
+      let data: (Project | GitHubUser)[] = [];
       
       if (searchKeyword) {
         // 搜索模式
-        projects = await searchRepositories(searchKeyword);
+        if (searchType === 'user') {
+          data = await searchUsers(searchKeyword);
+        } else if (searchType === 'lang') {
+           // 语言搜索：视为仓库搜索，但 query 加上 language:
+           data = await searchRepositories(`language:${searchKeyword} ${searchKeyword}`);
+        } else {
+          // 默认仓库搜索
+          data = await searchRepositories(searchKeyword);
+        }
       } else if (currentTab === 'daily') {
         // 每日推荐 (模拟为今日热门)
-        projects = await getTrendingRepositories('daily');
+        data = await getTrendingRepositories('daily');
       } else {
         // 趋势榜
         const timeMap: Record<TimeFilterType, 'daily' | 'weekly' | 'monthly'> = {
@@ -92,27 +105,40 @@ const HomeScreen: React.FC = () => {
           week: 'weekly',
           month: 'monthly'
         };
-        projects = await getTrendingRepositories(timeMap[currentTimeFilter]);
+        data = await getTrendingRepositories(timeMap[currentTimeFilter]);
       }
       
-      // 应用本地筛选条件 (语言)
-      if (selectedLanguages.length > 0) {
-        projects = projects.filter(p => selectedLanguages.includes(p.language));
+      // 应用本地筛选条件 (语言) - 仅在非用户搜索且非语言搜索模式下
+      if (searchType === 'repo' && selectedLanguages.length > 0) {
+        data = (data as Project[]).filter(p => selectedLanguages.includes(p.language));
       }
       
-      setProjectList(projects);
+      // Merge with bookmarks
+      const bookmarks = await getBookmarks();
+      const bookmarkedIds = new Set(bookmarks.map(b => b.id));
+
+      const dataWithBookmarks = data.map(item => {
+        if ('type' in item && 'login' in item) return item; // User
+        const project = item as Project;
+        return {
+          ...project,
+          isBookmarked: bookmarkedIds.has(project.id)
+        };
+      });
+
+      setDataList(dataWithBookmarks);
     } catch (error: any) {
       if (error.message === 'RATE_LIMIT_EXCEEDED') {
-        Alert.alert('提示', '访问过于频繁，请稍后再试');
+        Alert.alert(i18n.t('error'), i18n.t('error')); // Should use specific error msg if available
         // 如果是速率限制，不应该清空当前列表，保留旧数据
         return;
       }
-      Alert.alert('错误', '加载项目数据失败，请重试');
+      Alert.alert(i18n.t('error'), i18n.t('error'));
       console.error(error);
     } finally {
       setIsLoading(false);
     }
-  }, [currentTab, currentTimeFilter, selectedLanguages, selectedProjectTypes, searchKeyword]);
+  }, [currentTab, currentTimeFilter, selectedLanguages, selectedProjectTypes, searchKeyword, searchType]);
 
   const applyFilters = useCallback((projects: Project[]): Project[] => {
     if (selectedLanguages.length === 0 && selectedProjectTypes.length === 0) {
@@ -155,8 +181,18 @@ const HomeScreen: React.FC = () => {
     router.push('/p-personal_center');
   }, [router]);
 
+  const handleUserPress = useCallback((user: GitHubUser) => {
+    router.push({
+      pathname: '/p-user_profile',
+      params: {
+        username: user.login,
+        avatar_url: user.avatar_url
+      }
+    });
+  }, [router]);
+
   const handleProjectPress = useCallback((projectId: string) => {
-    const project = projectList.find(p => p.id === projectId);
+    const project = (dataList as Project[]).find(p => p.id === projectId);
     if (project) {
       router.push({
         pathname: '/p-project_detail',
@@ -168,31 +204,43 @@ const HomeScreen: React.FC = () => {
         }
       });
     }
-  }, [router, projectList]);
+  }, [router, dataList]);
 
-  const handleBookmarkToggle = useCallback((projectId: string) => {
-    setProjectList(prevProjects =>
-      prevProjects.map(project =>
-        project.id === projectId
-          ? { ...project, isBookmarked: !project.isBookmarked }
-          : project
+  const handleBookmarkToggle = useCallback(async (projectId: string) => {
+    const projectIndex = (dataList as Project[]).findIndex(p => p.id === projectId);
+    if (projectIndex === -1) return;
+    
+    const project = (dataList as Project[])[projectIndex];
+    const newStatus = !project.isBookmarked;
+
+    // Optimistic update
+    setDataList(prevData =>
+      (prevData as Project[]).map(p =>
+        p.id === projectId
+          ? { ...p, isBookmarked: newStatus }
+          : p
       )
     );
-    
-    // 更新原始数据
-    const updateBookmarkStatus = (projects: Project[]) =>
-      projects.map(project =>
-        project.id === projectId
-          ? { ...project, isBookmarked: !project.isBookmarked }
-          : project
+
+    try {
+      if (newStatus) {
+        await addBookmark(project as unknown as BookmarkProject);
+      } else {
+        await removeBookmark(projectId);
+      }
+    } catch (error) {
+      console.error('Bookmark toggle failed', error);
+      // Revert
+      setDataList(prevData =>
+        (prevData as Project[]).map(p =>
+          p.id === projectId
+            ? { ...p, isBookmarked: !newStatus }
+            : p
+        )
       );
-    
-    if (currentTab === 'daily') {
-      // 这里应该调用API，现在只更新本地数据
-    } else {
-      // 这里应该调用API，现在只更新本地数据
+      Alert.alert(i18n.t('error'), i18n.t('operation_failed'));
     }
-  }, [currentTab]);
+  }, [dataList]);
 
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
@@ -207,15 +255,17 @@ const HomeScreen: React.FC = () => {
     
     try {
       // 加载更多数据
-      // 注意：这里为了简化，仍然使用搜索API，但在实际应用中应该使用分页参数
-      // 由于 GitHub API 限制和分页逻辑的复杂性，这里暂时只演示加载逻辑
-      // 实际项目中需要维护 page 状态
-      
-      const nextPage = Math.floor(projectList.length / 10) + 1;
-      let newProjects: Project[] = [];
+      const nextPage = Math.floor(dataList.length / 10) + 1;
+      let newItems: (Project | GitHubUser)[] = [];
 
       if (searchKeyword) {
-        newProjects = await searchRepositories(searchKeyword, 'stars', 'desc', nextPage);
+        if (searchType === 'user') {
+          newItems = await searchUsers(searchKeyword, nextPage);
+        } else if (searchType === 'lang') {
+          newItems = await searchRepositories(`language:${searchKeyword} ${searchKeyword}`, 'stars', 'desc', nextPage);
+        } else {
+          newItems = await searchRepositories(searchKeyword, 'stars', 'desc', nextPage);
+        }
       } else {
          const timeMap: Record<TimeFilterType, 'daily' | 'weekly' | 'monthly'> = {
           day: 'daily',
@@ -224,10 +274,6 @@ const HomeScreen: React.FC = () => {
         };
         // 每日推荐也使用 trending 逻辑
         const timeFilter = currentTab === 'daily' ? 'daily' : timeMap[currentTimeFilter];
-        // 对于 trending，我们简单地再次调用（实际应该有分页逻辑，这里 GitHub API 模拟 trending 也是用的 search）
-        // 简单起见，我们假设 searchRepositories 支持分页，我们传递分页参数
-        // 但 getTrendingRepositories 内部调用 searchRepositories 时已经写死了参数
-        // 为了支持分页，我们需要修改 getTrendingRepositories 或直接调用 searchRepositories
         
         // 重新构建 trending 的 query
         const date = new Date();
@@ -237,34 +283,48 @@ const HomeScreen: React.FC = () => {
         
         const dateString = date.toISOString().split('T')[0];
         const query = `created:>${dateString}`;
-        newProjects = await searchRepositories(query, 'stars', 'desc', nextPage);
+        newItems = await searchRepositories(query, 'stars', 'desc', nextPage);
       }
 
       // 过滤掉已存在的项目
-      const existingIds = new Set(projectList.map(p => p.id));
-      const uniqueNewProjects = newProjects.filter(p => !existingIds.has(p.id));
+      // Note: for Users, id is number but mapped to string in searchUsers (wait, let me check github.ts)
+      // In github.ts: GitHubRepo id is number, converted to string. GitHubUser id is string.
+      // So checking string ID is safe.
+      const existingIds = new Set(dataList.map(p => p.id));
+      const uniqueNewItems = newItems.filter(p => !existingIds.has(p.id));
 
-      if (uniqueNewProjects.length > 0) {
-        setProjectList(prev => [...prev, ...uniqueNewProjects]);
-        console.log('加载更多项目成功');
+      if (uniqueNewItems.length > 0) {
+        setDataList(prev => [...prev, ...uniqueNewItems]);
+        console.log('Load more success');
       } else {
-        console.log('没有更多数据了');
+        console.log('No more data');
       }
     } catch (error) {
-      console.error('加载更多失败:', error);
-      // 不弹窗打扰用户，只是 console log
+      console.error('Load more failed:', error);
     } finally {
       setIsLoadingMore(false);
     }
-  }, [isLoadingMore, projectList.length, searchKeyword, currentTab, currentTimeFilter]);
+  }, [isLoadingMore, dataList.length, searchKeyword, currentTab, currentTimeFilter, searchType]);
 
-  const renderProjectItem = useCallback(({ item }: { item: Project }) => (
-    <ProjectCard
-      project={item}
-      onPress={() => handleProjectPress(item.id)}
-      onBookmarkToggle={() => handleBookmarkToggle(item.id)}
-    />
-  ), [handleProjectPress, handleBookmarkToggle]);
+  const renderItem = useCallback(({ item }: { item: Project | GitHubUser }) => {
+    if ('type' in item && 'login' in item) {
+       // It's a User
+       return (
+         <UserCard
+            user={item as GitHubUser}
+            onPress={() => handleUserPress(item as GitHubUser)}
+         />
+       );
+    }
+    // It's a Project
+    return (
+      <ProjectCard
+        project={item as Project}
+        onPress={() => handleProjectPress(item.id)}
+        onBookmarkToggle={() => handleBookmarkToggle(item.id)}
+      />
+    );
+  }, [handleProjectPress, handleBookmarkToggle, handleUserPress]);
 
   const handleClearSearch = useCallback(() => {
     router.setParams({ search_keyword: '' });
@@ -274,13 +334,35 @@ const HomeScreen: React.FC = () => {
   const renderListHeader = useCallback(() => (
     <View>
       {searchKeyword ? (
-        <View style={styles.searchHeader}>
-          <Text style={styles.searchHeaderText}>
-            "{searchKeyword}" 的搜索结果
-          </Text>
-          <TouchableOpacity onPress={handleClearSearch} style={styles.clearSearchButton}>
-            <Text style={styles.clearSearchText}>清除搜索</Text>
-          </TouchableOpacity>
+        <View>
+          <View style={styles.searchHeader}>
+            <Text style={styles.searchHeaderText}>
+              {i18n.t('search_results', { query: searchKeyword })}
+            </Text>
+            <TouchableOpacity onPress={handleClearSearch} style={styles.clearSearchButton}>
+              <Text style={styles.clearSearchText}>{i18n.t('clear_search')}</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.searchTypeContainer}>
+            {(['repo', 'user', 'lang'] as SearchType[]).map((type) => (
+              <TouchableOpacity
+                key={type}
+                style={[
+                  styles.searchTypeButton,
+                  searchType === type && styles.searchTypeButtonActive
+                ]}
+                onPress={() => setSearchType(type)}
+              >
+                <Text style={[
+                  styles.searchTypeText,
+                  searchType === type && styles.searchTypeTextActive
+                ]}>
+                  {i18n.t(`search_type_${type}`)}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
       ) : (
         <>
@@ -298,90 +380,67 @@ const HomeScreen: React.FC = () => {
         </>
       )}
       
-      <CategoryFilter
-        selectedLanguages={selectedLanguages}
-        onPress={() => {
-          router.push({
-            pathname: '/p-category_filter',
-            params: {
-              selected_languages: selectedLanguages.join(','),
-              selected_project_types: selectedProjectTypes.join(',')
-            }
-          });
-        }}
-      />
+      {(currentTab === 'daily' || searchKeyword) && (
+        <CategoryFilter
+          selectedLanguages={selectedLanguages}
+          onPress={handleCategoryFilterPress}
+        />
+      )}
     </View>
-  ), [currentTab, currentTimeFilter, selectedLanguages, handleTabChange, handleTimeFilterChange, handleCategoryFilterPress, searchKeyword, handleClearSearch]);
-
-  const renderListFooter = useCallback(() => {
-    if (isLoading) {
-      return (
-        <View style={styles.loadingContainer}>
-          <FontAwesome6 name="spinner" size={24} color="#2563eb" style={styles.loadingIcon} />
-          <Text style={styles.loadingText}>加载中...</Text>
-        </View>
-      );
-    }
-
-    if (projectList.length === 0) {
-      return (
-        <View style={styles.noDataContainer}>
-          <FontAwesome6 name="magnifying-glass" size={48} color="#d1d5db" />
-          <Text style={styles.noDataText}>暂无符合条件的项目</Text>
-        </View>
-      );
-    }
-
-    return (
-      <View style={styles.loadMoreContainer}>
-        <TouchableOpacity
-          style={styles.loadMoreButton}
-          onPress={handleLoadMore}
-          disabled={isLoadingMore}
-        >
-          {isLoadingMore && (
-            <FontAwesome6 name="spinner" size={14} color="#ffffff" style={styles.loadingIcon} />
-          )}
-          <Text style={styles.loadMoreText}>加载更多</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }, [isLoading, projectList.length, isLoadingMore, handleLoadMore]);
-
-  const renderHeader = useCallback(() => (
-    <View style={styles.header}>
-      <View style={styles.logoContainer}>
-        <View style={styles.logoIcon}>
-          <FontAwesome6 name="code" size={16} color="#ffffff" />
-        </View>
-        <Text style={styles.logoText}>码潮</Text>
-      </View>
-      <TouchableOpacity style={styles.profileButton} onPress={handleProfilePress}>
-        <FontAwesome6 name="user" size={16} color="#6b7280" />
-      </TouchableOpacity>
-    </View>
-  ), [handleProfilePress]);
+  ), [searchKeyword, currentTab, currentTimeFilter, selectedLanguages, selectedProjectTypes, searchType, handleClearSearch, handleTabChange, handleTimeFilterChange, handleCategoryFilterPress]);
 
   return (
-    <SafeAreaView style={styles.container}>
-      {renderHeader()}
-      
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <View style={styles.header}>
+        <View style={styles.logoContainer}>
+          <View style={styles.logoIcon}>
+            <FontAwesome6 name="github" size={20} color="#fff" />
+          </View>
+          <Text style={styles.logoText}>GitTrend</Text>
+        </View>
+        <TouchableOpacity style={styles.profileButton} onPress={handleProfilePress}>
+          <FontAwesome6 name="user" size={16} color="#4b5563" />
+        </TouchableOpacity>
+      </View>
+
       <FlatList
-        data={projectList}
-        renderItem={renderProjectItem}
-        keyExtractor={(item) => item.id}
-        ListHeaderComponent={renderListHeader}
-        ListFooterComponent={renderListFooter}
+        data={dataList}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={handleRefresh}
-            colors={['#2563eb']}
-            tintColor="#2563eb"
-          />
+          <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} colors={['#2563eb']} tintColor="#2563eb" />
         }
+        ListHeaderComponent={renderListHeader}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={() => (
+          <View>
+            {isLoading && !isRefreshing && (
+              <View style={styles.loadingContainer}>
+                <FontAwesome6 name="spinner" size={24} color="#2563eb" style={styles.loadingIcon} />
+                <Text style={styles.loadingText}>{i18n.t('loading')}</Text>
+              </View>
+            )}
+            {isLoadingMore && (
+              <View style={styles.loadMoreContainer}>
+                <FontAwesome6 name="spinner" size={20} color="#2563eb" style={styles.loadingIcon} />
+                <Text style={styles.loadingText}>{i18n.t('loading')}</Text>
+              </View>
+            )}
+            {!isLoading && !isLoadingMore && dataList.length > 0 && (
+              <View style={styles.noDataContainer}>
+                <Text style={styles.noDataText}>{i18n.t('no_more_data')}</Text>
+              </View>
+            )}
+            {!isLoading && dataList.length === 0 && (
+              <View style={styles.noDataContainer}>
+                <FontAwesome6 name="box-open" size={48} color="#9ca3af" />
+                <Text style={styles.noDataText}>{i18n.t('no_results')}</Text>
+              </View>
+            )}
+          </View>
+        )}
       />
     </SafeAreaView>
   );

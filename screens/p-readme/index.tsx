@@ -4,6 +4,7 @@ import Markdown from 'react-native-markdown-display';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { getReadme } from '../../services/github';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import i18n from '../../services/i18n';
 
 const ReadmeScreen = () => {
   const params = useLocalSearchParams<{ owner: string; repo: string; default_branch: string }>();
@@ -22,7 +23,7 @@ const ReadmeScreen = () => {
       const processed = processMarkdown(markdown);
       setContent(processed);
     } catch (e) {
-      setContent('# Error loading README');
+      setContent(i18n.t('readme_load_error'));
     } finally {
       setLoading(false);
     }
@@ -68,7 +69,7 @@ const ReadmeScreen = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      <Stack.Screen options={{ title: 'README', headerBackTitle: '返回' }} />
+      <Stack.Screen options={{ title: 'README', headerBackTitle: i18n.t('back') }} />
       {loading ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color="#0000ff" />

@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FontAwesome6 } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import i18n from '../../services/i18n';
 import styles from './styles';
 
 type FeedbackType = 'bug' | 'suggestion' | 'compliment' | 'other' | '';
@@ -30,10 +31,10 @@ const FeedbackFormScreen = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const feedbackTypeOptions = [
-    { key: 'bug' as FeedbackType, label: '功能异常' },
-    { key: 'suggestion' as FeedbackType, label: '功能建议' },
-    { key: 'compliment' as FeedbackType, label: '表扬鼓励' },
-    { key: 'other' as FeedbackType, label: '其他问题' },
+    { key: 'bug' as FeedbackType, label: i18n.t('feedback_type_bug') },
+    { key: 'suggestion' as FeedbackType, label: i18n.t('feedback_type_suggestion') },
+    { key: 'compliment' as FeedbackType, label: i18n.t('feedback_type_compliment') },
+    { key: 'other' as FeedbackType, label: i18n.t('feedback_type_other') },
   ];
 
   const handleBackPress = () => {
@@ -61,7 +62,7 @@ const FeedbackFormScreen = () => {
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
       
       if (!permissionResult.granted) {
-        Alert.alert('权限提示', '需要访问相册权限才能上传图片');
+        Alert.alert(i18n.t('permission_alert_title'), i18n.t('permission_alert_msg'));
         return;
       }
 
@@ -79,7 +80,7 @@ const FeedbackFormScreen = () => {
         }));
       }
     } catch (error) {
-      Alert.alert('错误', '上传图片失败，请重试');
+      Alert.alert(i18n.t('alert_error'), i18n.t('upload_failed'));
     }
   };
 
@@ -89,17 +90,17 @@ const FeedbackFormScreen = () => {
 
   const validateForm = (): boolean => {
     if (!formData.feedbackType) {
-      Alert.alert('提示', '请选择反馈类型');
+      Alert.alert(i18n.t('alert_tip'), i18n.t('select_feedback_type'));
       return false;
     }
 
     if (!formData.feedbackContent.trim()) {
-      Alert.alert('提示', '请填写反馈内容');
+      Alert.alert(i18n.t('alert_tip'), i18n.t('enter_feedback_content'));
       return false;
     }
 
     if (formData.feedbackContent.length > 500) {
-      Alert.alert('提示', '反馈内容不能超过500字');
+      Alert.alert(i18n.t('alert_tip'), i18n.t('feedback_length_limit'));
       return false;
     }
 
@@ -118,11 +119,11 @@ const FeedbackFormScreen = () => {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       Alert.alert(
-        '提交成功',
-        '反馈提交成功，感谢您的宝贵意见！',
+        i18n.t('submit_success'),
+        i18n.t('submit_success_msg'),
         [
           {
-            text: '确定',
+            text: i18n.t('ok'),
             onPress: () => {
               if (router.canGoBack()) {
                 router.back();
@@ -132,7 +133,7 @@ const FeedbackFormScreen = () => {
         ]
       );
     } catch (error) {
-      Alert.alert('提交失败', '网络错误，请稍后重试');
+      Alert.alert(i18n.t('submit_failed'), i18n.t('network_error_retry'));
     } finally {
       setIsSubmitting(false);
     }
@@ -172,7 +173,7 @@ const FeedbackFormScreen = () => {
         >
           <FontAwesome6 name="chevron-left" size={16} color="#111827" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>意见反馈</Text>
+        <Text style={styles.headerTitle}>{i18n.t('feedback_form_title')}</Text>
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -180,7 +181,7 @@ const FeedbackFormScreen = () => {
         <View style={styles.formCard}>
           {/* 反馈类型 */}
           <View style={styles.formSection}>
-            <Text style={styles.formLabel}>反馈类型</Text>
+            <Text style={styles.formLabel}>{i18n.t('feedback_type_label')}</Text>
             <View style={styles.feedbackTypeGrid}>
               {feedbackTypeOptions.map(renderFeedbackTypeButton)}
             </View>
@@ -188,10 +189,10 @@ const FeedbackFormScreen = () => {
 
           {/* 反馈内容 */}
           <View style={styles.formSection}>
-            <Text style={styles.formLabel}>反馈内容</Text>
+            <Text style={styles.formLabel}>{i18n.t('feedback_content_label')}</Text>
             <TextInput
               style={styles.feedbackContentInput}
-              placeholder="请详细描述您遇到的问题或建议..."
+              placeholder={i18n.t('feedback_content_placeholder')}
               placeholderTextColor="#9CA3AF"
               multiline
               textAlignVertical="top"
@@ -211,10 +212,10 @@ const FeedbackFormScreen = () => {
 
           {/* 联系方式 */}
           <View style={styles.formSection}>
-            <Text style={styles.formLabel}>联系方式（选填）</Text>
+            <Text style={styles.formLabel}>{i18n.t('feedback_contact_label')}</Text>
             <TextInput
               style={styles.contactInfoInput}
-              placeholder="邮箱或手机号，方便我们联系您"
+              placeholder={i18n.t('feedback_contact_placeholder')}
               placeholderTextColor="#9CA3AF"
               value={formData.contactInfo}
               onChangeText={handleContactInfoChange}
@@ -223,7 +224,7 @@ const FeedbackFormScreen = () => {
 
           {/* 上传截图 */}
           <View style={styles.formSection}>
-            <Text style={styles.formLabel}>上传截图（选填）</Text>
+            <Text style={styles.formLabel}>{i18n.t('feedback_image_label')}</Text>
             
             {!formData.uploadedImage ? (
               <TouchableOpacity
@@ -232,8 +233,8 @@ const FeedbackFormScreen = () => {
                 activeOpacity={0.7}
               >
                 <FontAwesome6 name="cloud-arrow-up" size={24} color="#6B7280" />
-                <Text style={styles.imageUploadText}>点击或拖拽图片到此处上传</Text>
-                <Text style={styles.imageUploadSubText}>支持JPG、PNG格式，最大5MB</Text>
+                <Text style={styles.imageUploadText}>{i18n.t('feedback_image_upload_text')}</Text>
+                <Text style={styles.imageUploadSubText}>{i18n.t('feedback_image_upload_subtext')}</Text>
               </TouchableOpacity>
             ) : (
               <View style={styles.imagePreviewContainer}>
@@ -260,19 +261,19 @@ const FeedbackFormScreen = () => {
             activeOpacity={0.8}
           >
             <Text style={styles.submitButtonText}>
-              {isSubmitting ? '提交中...' : '提交反馈'}
+              {isSubmitting ? i18n.t('feedback_submitting') : i18n.t('feedback_submit_button')}
             </Text>
           </TouchableOpacity>
         </View>
 
         {/* 反馈须知 */}
         <View style={styles.noticeCard}>
-          <Text style={styles.noticeTitle}>反馈须知</Text>
+          <Text style={styles.noticeTitle}>{i18n.t('feedback_notice_title')}</Text>
           <View style={styles.noticeList}>
-            <Text style={styles.noticeItem}>• 我们会认真对待每一条反馈，感谢您的支持</Text>
-            <Text style={styles.noticeItem}>• 工作日内我们会在24小时内回复您的反馈</Text>
-            <Text style={styles.noticeItem}>• 提供详细的问题描述和截图有助于我们更快解决问题</Text>
-            <Text style={styles.noticeItem}>• 请遵守法律法规，文明用语</Text>
+            <Text style={styles.noticeItem}>{i18n.t('feedback_notice_1')}</Text>
+            <Text style={styles.noticeItem}>{i18n.t('feedback_notice_2')}</Text>
+            <Text style={styles.noticeItem}>{i18n.t('feedback_notice_3')}</Text>
+            <Text style={styles.noticeItem}>{i18n.t('feedback_notice_4')}</Text>
           </View>
         </View>
       </ScrollView>

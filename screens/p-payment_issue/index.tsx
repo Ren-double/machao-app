@@ -5,6 +5,7 @@ import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FontAwesome6 } from '@expo/vector-icons';
+import i18n from '../../services/i18n';
 import PaymentItem from './components/PaymentItem';
 import PaymentRecord from './components/PaymentRecord';
 import styles from './styles';
@@ -33,14 +34,14 @@ const PaymentIssueScreen = () => {
       icon: 'credit-card',
       iconColor: '#8b5cf6',
       iconBgColor: '#f3e8ff',
-      title: '如何订阅高级会员？',
-      description: '订阅高级会员的步骤：',
+      title: i18n.t('payment_faq_1_title'),
+      description: i18n.t('payment_faq_1_desc'),
       steps: [
-        '进入"个人中心"页面',
-        '点击"会员订阅"选项',
-        '选择适合您的订阅计划',
-        '选择支付方式并完成支付',
-        '支付成功后，您将立即享受高级会员权益'
+        i18n.t('payment_faq_1_step_1'),
+        i18n.t('payment_faq_1_step_2'),
+        i18n.t('payment_faq_1_step_3'),
+        i18n.t('payment_faq_1_step_4'),
+        i18n.t('payment_faq_1_step_5')
       ]
     },
     {
@@ -48,14 +49,14 @@ const PaymentIssueScreen = () => {
       icon: 'circle-exclamation',
       iconColor: '#ef4444',
       iconBgColor: '#fef2f2',
-      title: '支付失败怎么办？',
-      description: '如果您遇到支付失败的情况，可以尝试以下解决方法：',
+      title: i18n.t('payment_faq_2_title'),
+      description: i18n.t('payment_faq_2_desc'),
       steps: [
-        '检查您的网络连接是否正常',
-        '确认您的支付账户余额充足',
-        '尝试使用其他支付方式',
-        '等待几分钟后重新尝试支付',
-        '如果问题仍然存在，请联系客服'
+        i18n.t('payment_faq_2_step_1'),
+        i18n.t('payment_faq_2_step_2'),
+        i18n.t('payment_faq_2_step_3'),
+        i18n.t('payment_faq_2_step_4'),
+        i18n.t('payment_faq_2_step_5')
       ]
     },
     {
@@ -63,14 +64,14 @@ const PaymentIssueScreen = () => {
       icon: 'arrow-rotate-right',
       iconColor: '#10b981',
       iconBgColor: '#f0fdf4',
-      title: '如何取消自动续费？',
-      description: '取消自动续费的方法：',
+      title: i18n.t('payment_faq_3_title'),
+      description: i18n.t('payment_faq_3_desc'),
       steps: [
-        '进入"个人中心"页面',
-        '点击"会员订阅"选项',
-        '找到"自动续费"设置',
-        '关闭自动续费开关',
-        '确认取消操作'
+        i18n.t('payment_faq_3_step_1'),
+        i18n.t('payment_faq_3_step_2'),
+        i18n.t('payment_faq_3_step_3'),
+        i18n.t('payment_faq_3_step_4'),
+        i18n.t('payment_faq_3_step_5')
       ]
     },
     {
@@ -78,15 +79,15 @@ const PaymentIssueScreen = () => {
       icon: 'receipt',
       iconColor: '#3b82f6',
       iconBgColor: '#dbeafe',
-      title: '如何获取发票？',
-      description: '获取发票的步骤：',
+      title: i18n.t('payment_faq_4_title'),
+      description: i18n.t('payment_faq_4_desc'),
       steps: [
-        '进入"个人中心"页面',
-        '点击"我的订单"选项',
-        '找到需要开票的订单',
-        '点击"申请发票"按钮',
-        '填写发票信息并提交',
-        '发票将在1-3个工作日内开具完成'
+        i18n.t('payment_faq_4_step_1'),
+        i18n.t('payment_faq_4_step_2'),
+        i18n.t('payment_faq_4_step_3'),
+        i18n.t('payment_faq_4_step_4'),
+        i18n.t('payment_faq_4_step_5'),
+        i18n.t('payment_faq_4_step_6')
       ]
     }
   ];
@@ -94,13 +95,13 @@ const PaymentIssueScreen = () => {
   const paymentRecords = [
     {
       id: '1',
-      title: '高级会员月订阅',
+      title: i18n.t('mock_payment_1_title'),
       date: '2023-06-15 14:30',
       amount: '¥19.90'
     },
     {
       id: '2',
-      title: '代码存储空间扩展',
+      title: i18n.t('mock_payment_2_title'),
       date: '2023-05-20 09:15',
       amount: '¥39.90'
     }
@@ -117,7 +118,7 @@ const PaymentIssueScreen = () => {
         >
           <FontAwesome6 name="chevron-left" size={16} color="#111827" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>支付问题</Text>
+        <Text style={styles.headerTitle}>{i18n.t('payment_issue_title')}</Text>
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -140,9 +141,9 @@ const PaymentIssueScreen = () => {
         {/* 支付记录 */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>最近支付记录</Text>
+            <Text style={styles.sectionTitle}>{i18n.t('recent_payment_records')}</Text>
             <TouchableOpacity onPress={handleViewAllPayments} activeOpacity={0.7}>
-              <Text style={styles.viewAllButton}>查看全部</Text>
+              <Text style={styles.viewAllButton}>{i18n.t('view_all')}</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.recordsContainer}>
@@ -160,13 +161,13 @@ const PaymentIssueScreen = () => {
         {/* 联系支持 */}
         <View style={styles.section}>
           <View style={styles.contactContainer}>
-            <Text style={styles.contactDescription}>支付问题需要帮助？</Text>
+            <Text style={styles.contactDescription}>{i18n.t('payment_help_desc')}</Text>
             <TouchableOpacity 
               style={styles.contactButton} 
               onPress={handleContactSupport}
               activeOpacity={0.8}
             >
-              <Text style={styles.contactButtonText}>联系客服</Text>
+              <Text style={styles.contactButtonText}>{i18n.t('contact_support')}</Text>
             </TouchableOpacity>
           </View>
         </View>

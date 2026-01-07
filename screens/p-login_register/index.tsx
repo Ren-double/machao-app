@@ -9,6 +9,7 @@ import { makeRedirectUri, useAuthRequest, ResponseType } from 'expo-auth-session
 import styles from './styles';
 import { loginUser, registerUser, loginWithGitHub } from '../../services/auth';
 import { GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET } from '../../config';
+import i18n from '../../services/i18n';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -82,12 +83,12 @@ const LoginRegisterScreen: React.FC = () => {
       if (tokenData.access_token) {
         fetchUserInfo(tokenData.access_token);
       } else {
-        Alert.alert('登录失败', tokenData.error_description || tokenData.error || '无法获取访问令牌');
+        Alert.alert(i18n.t('login_failed'), tokenData.error_description || tokenData.error || i18n.t('token_error'));
         setIsLoading(false);
       }
     } catch (error) {
       console.error('Token exchange error:', error);
-      Alert.alert('登录失败', 'GitHub授权出错');
+      Alert.alert(i18n.t('login_failed'), i18n.t('github_auth_error'));
       setIsLoading(false);
     }
   };
@@ -106,7 +107,7 @@ const LoginRegisterScreen: React.FC = () => {
       setIsSuccessModalVisible(true);
     } catch (error) {
       console.error('User info error:', error);
-      Alert.alert('登录失败', '获取用户信息失败');
+      Alert.alert(i18n.t('login_failed'), i18n.t('fetch_user_failed'));
     } finally {
       setIsLoading(false);
     }
@@ -140,15 +141,15 @@ const LoginRegisterScreen: React.FC = () => {
                 <FontAwesome6 name="code" size={24} color="#ffffff" />
               </LinearGradient>
               <View style={styles.logoTextContainer}>
-                <Text style={styles.appTitle}>码潮</Text>
-                <Text style={styles.appSubtitle}>发现优质开源项目</Text>
+                <Text style={styles.appTitle}>{i18n.t('app_name')}</Text>
+                <Text style={styles.appSubtitle}>{i18n.t('app_slogan')}</Text>
               </View>
             </View>
 
             {/* GitHub Login Only */}
             <View style={styles.formContainer}>
               <View style={styles.githubDescriptionContainer}>
-                <Text style={styles.githubDescription}>使用GitHub账号登录以同步数据</Text>
+                <Text style={styles.githubDescription}>{i18n.t('github_login_desc')}</Text>
               </View>
               <TouchableOpacity
                 style={[styles.githubLoginButton, isLoading ? styles.githubLoginButtonDisabled : null]}
@@ -160,7 +161,7 @@ const LoginRegisterScreen: React.FC = () => {
               >
                 <FontAwesome6 name="github" size={20} color="#ffffff" />
                 <Text style={styles.githubLoginButtonText}>
-                  {isLoading ? '授权中...' : 'GitHub登录'}
+                  {isLoading ? i18n.t('authorizing') : i18n.t('github_login')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -180,13 +181,13 @@ const LoginRegisterScreen: React.FC = () => {
             <View style={styles.successIconContainer}>
               <FontAwesome6 name="check" size={24} color="#ffffff" />
             </View>
-            <Text style={styles.modalTitle}>登录成功</Text>
-            <Text style={styles.modalDescription}>欢迎使用码潮，发现优质开源项目</Text>
+            <Text style={styles.modalTitle}>{i18n.t('login_success')}</Text>
+            <Text style={styles.modalDescription}>{i18n.t('welcome_desc')}</Text>
             <TouchableOpacity
               style={styles.modalConfirmButton}
               onPress={handleSuccessConfirm}
             >
-              <Text style={styles.modalConfirmButtonText}>开始使用</Text>
+              <Text style={styles.modalConfirmButtonText}>{i18n.t('get_started')}</Text>
             </TouchableOpacity>
           </View>
         </View>

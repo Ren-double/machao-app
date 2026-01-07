@@ -5,6 +5,7 @@ import { View, Text, ScrollView, TouchableOpacity, Linking, Alert } from 'react-
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FontAwesome6 } from '@expo/vector-icons';
+import i18n from '../../services/i18n';
 import styles from './styles';
 
 const AboutAppScreen = () => {
@@ -30,19 +31,19 @@ const AboutAppScreen = () => {
       if (supported) {
         await Linking.openURL(url);
       } else {
-        Alert.alert('提示', `无法打开${platform}应用`);
+        Alert.alert(i18n.t('prompt'), i18n.t('open_app_error', { platform }));
       }
     } catch (error) {
-      Alert.alert('错误', '打开链接时发生错误');
+      Alert.alert(i18n.t('error'), i18n.t('open_link_error'));
     }
   };
 
   const handleWeiboPress = () => {
-    handleSocialPress('微博', '该功能还在开发中，敬请期待');
+    handleSocialPress(i18n.t('weibo'), i18n.t('feature_in_development'));
   };
 
   const handleWechatPress = () => {
-    Alert.alert('微信公众号', '该功能还在开发中，敬请期待');
+    Alert.alert(i18n.t('wechat_official_account'), i18n.t('feature_in_development'));
   };
 
   const handleGithubPress = () => {
@@ -60,7 +61,7 @@ const AboutAppScreen = () => {
         >
           <FontAwesome6 name="chevron-left" size={16} color="#111827" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>关于码潮</Text>
+        <Text style={styles.headerTitle}>{i18n.t('p_about_app')}</Text>
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -69,16 +70,16 @@ const AboutAppScreen = () => {
           <View style={styles.appIconContainer}>
             <FontAwesome6 name="code" size={32} color="#ffffff" />
           </View>
-          <Text style={styles.appName}>码潮</Text>
-          <Text style={styles.appVersion}>版本 1.0.0</Text>
+          <Text style={styles.appName}>{i18n.t('app_name')}</Text>
+          <Text style={styles.appVersion}>{i18n.t('version_info')}</Text>
           <Text style={styles.appDescription}>
-            码潮是一款专为开发者打造的代码分享和学习平台，让编程变得更加简单有趣。
+            {i18n.t('app_description')}
           </Text>
         </View>
 
         {/* 法律信息 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>法律信息</Text>
+          <Text style={styles.sectionTitle}>{i18n.t('legal_info')}</Text>
           <View style={styles.menuList}>
             <TouchableOpacity 
               style={styles.menuItem} 
@@ -90,8 +91,8 @@ const AboutAppScreen = () => {
                   <FontAwesome6 name="file-contract" size={16} color="#3b82f6" />
                 </View>
                 <View style={styles.menuTextContainer}>
-                  <Text style={styles.menuTitle}>使用条款</Text>
-                  <Text style={styles.menuSubtitle}>查看用户协议</Text>
+                  <Text style={styles.menuTitle}>{i18n.t('terms_of_service')}</Text>
+                  <Text style={styles.menuSubtitle}>{i18n.t('view_terms')}</Text>
                 </View>
               </View>
               <FontAwesome6 name="chevron-right" size={14} color="#6b7280" />
@@ -107,8 +108,8 @@ const AboutAppScreen = () => {
                   <FontAwesome6 name="user-shield" size={16} color="#10b981" />
                 </View>
                 <View style={styles.menuTextContainer}>
-                  <Text style={styles.menuTitle}>隐私政策</Text>
-                  <Text style={styles.menuSubtitle}>查看隐私保护说明</Text>
+                  <Text style={styles.menuTitle}>{i18n.t('privacy_policy')}</Text>
+                  <Text style={styles.menuSubtitle}>{i18n.t('view_privacy')}</Text>
                 </View>
               </View>
               <FontAwesome6 name="chevron-right" size={14} color="#6b7280" />
@@ -118,7 +119,7 @@ const AboutAppScreen = () => {
 
         {/* 社交媒体 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>关注我们</Text>
+          <Text style={styles.sectionTitle}>{i18n.t('follow_us')}</Text>
           <View style={styles.socialContainer}>
             <TouchableOpacity 
               style={styles.socialItem} 
@@ -128,7 +129,7 @@ const AboutAppScreen = () => {
               <View style={[styles.socialIconContainer, styles.weiboIconContainer]}>
                 <FontAwesome6 name="weibo" size={20} color="#ef4444" />
               </View>
-              <Text style={styles.socialLabel}>微博</Text>
+              <Text style={styles.socialLabel}>{i18n.t('weibo')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
@@ -139,7 +140,7 @@ const AboutAppScreen = () => {
               <View style={[styles.socialIconContainer, styles.wechatIconContainer]}>
                 <FontAwesome6 name="weixin" size={20} color="#10b981" />
               </View>
-              <Text style={styles.socialLabel}>微信</Text>
+              <Text style={styles.socialLabel}>{i18n.t('wechat')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
@@ -158,7 +159,7 @@ const AboutAppScreen = () => {
         {/* 版权信息 */}
         <View style={styles.copyrightSection}>
           <Text style={styles.copyrightText}>
-            © 2023 码潮团队 版权所有
+            {i18n.t('copyright')}
           </Text>
         </View>
       </ScrollView>

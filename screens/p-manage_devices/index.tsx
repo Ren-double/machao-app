@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FontAwesome6 } from '@expo/vector-icons';
 import * as Device from 'expo-device';
+import i18n from '../../services/i18n';
 import styles from './styles';
 
 interface DeviceItem {
@@ -28,7 +29,7 @@ const ManageDevicesScreen = () => {
       id: 'current',
       name: Device.modelName || 'Unknown Device',
       type: getDeviceType(Device.deviceType),
-      lastLogin: '刚刚',
+      lastLogin: i18n.t('just_now'),
       isCurrentDevice: true,
       osName: `${Device.osName} ${Device.osVersion}`,
     };
@@ -49,10 +50,10 @@ const ManageDevicesScreen = () => {
   // 既然是单机/无后端应用，"下线"只能是象征性的，或者清除本地 Token
   const handleLogoutAllDevices = () => {
     Alert.alert(
-      '提示',
-      '由于当前为本地演示模式，无法控制其他物理设备。但在真实环境中，此操作将吊销 GitHub 授权令牌。',
+      i18n.t('prompt'),
+      i18n.t('logout_devices_tip'),
       [
-        { text: '知道了' }
+        { text: i18n.t('got_it') }
       ]
     );
   };
@@ -80,14 +81,14 @@ const ManageDevicesScreen = () => {
         >
           <FontAwesome6 name="chevron-left" size={16} color="#111827" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>设备管理</Text>
+        <Text style={styles.headerTitle}>{i18n.t('p_manage_devices')}</Text>
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* 已登录设备卡片 */}
         <View style={styles.devicesCard}>
           <View style={styles.cardHeader}>
-            <Text style={styles.cardHeaderTitle}>已登录设备</Text>
+            <Text style={styles.cardHeaderTitle}>{i18n.t('logged_in_devices')}</Text>
           </View>
           
           <View style={styles.devicesList}>
@@ -111,7 +112,7 @@ const ManageDevicesScreen = () => {
                     <Text style={styles.deviceName}>{device.name}</Text>
                     <Text style={styles.deviceLoginInfo}>
                       {device.isCurrentDevice 
-                        ? `当前设备 · ${device.osName}`
+                        ? `${i18n.t('current_device')} · ${device.osName}`
                         : `${device.lastLogin}`
                       }
                     </Text>
@@ -119,7 +120,7 @@ const ManageDevicesScreen = () => {
                 </View>
                 
                 <View style={styles.currentDeviceBadge}>
-                   <Text style={styles.currentDeviceBadgeText}>在线</Text>
+                   <Text style={styles.currentDeviceBadgeText}>{i18n.t('online')}</Text>
                 </View>
               </View>
             ))}
@@ -130,7 +131,7 @@ const ManageDevicesScreen = () => {
         <View style={styles.securityTip}>
           <FontAwesome6 name="circle-info" size={14} color="#3b82f6" style={styles.tipIcon} />
           <Text style={styles.tipText}>
-            当前仅显示本机状态。
+            {i18n.t('device_status_tip')}
           </Text>
         </View>
 
@@ -142,7 +143,7 @@ const ManageDevicesScreen = () => {
             activeOpacity={0.7}
           >
             <FontAwesome6 name="shield-halved" size={14} color="#ef4444" style={styles.logoutAllIcon} />
-            <Text style={styles.logoutAllText}>下线其他设备 (模拟)</Text>
+            <Text style={styles.logoutAllText}>{i18n.t('logout_other_devices')}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

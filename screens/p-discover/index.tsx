@@ -5,6 +5,7 @@ import { View, Text, ScrollView, TextInput, TouchableOpacity, RefreshControl, Al
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FontAwesome6 } from '@expo/vector-icons';
+import i18n from '../../services/i18n';
 import styles from './styles';
 import CategoryCard from './components/CategoryCard';
 import TopicCard from './components/TopicCard';
@@ -104,7 +105,7 @@ const DiscoverScreen: React.FC = () => {
           return {
             id: topic.name,
             title: `#${topic.display_name || topic.name}`,
-            discussionCount: topic.short_description || '热门话题',
+            discussionCount: topic.short_description || i18n.t('hot_topic_default'),
             tag: 'Hot',
             color: colorSet.color,
             backgroundColor: colorSet.bg
@@ -114,9 +115,30 @@ const DiscoverScreen: React.FC = () => {
       } else {
          // Fallback to static if fetch fails or empty
          setTopics([
-            { id: '1', title: '#AI编程助手', discussionCount: '1.2k 讨论 · 今日热门', tag: '今日热门', color: '#2563eb', backgroundColor: '#dbeafe' },
-            { id: '2', title: '#前端框架对比', discussionCount: '856 讨论 · 本周热门', tag: '本周热门', color: '#10b981', backgroundColor: '#dcfce7' },
-            { id: '3', title: '#开源贡献指南', discussionCount: '623 讨论 · 本月热门', tag: '本月热门', color: '#8b5cf6', backgroundColor: '#ede9fe' },
+            { 
+              id: '1', 
+              title: i18n.t('topic_ai_assistant'), 
+              discussionCount: i18n.t('topic_discussion_count', { amount: '1.2k', tag: i18n.t('topic_hot_today') }), 
+              tag: i18n.t('topic_hot_today'), 
+              color: '#2563eb', 
+              backgroundColor: '#dbeafe' 
+            },
+            { 
+              id: '2', 
+              title: i18n.t('topic_frontend_frameworks'), 
+              discussionCount: i18n.t('topic_discussion_count', { amount: '856', tag: i18n.t('topic_hot_week') }), 
+              tag: i18n.t('topic_hot_week'), 
+              color: '#10b981', 
+              backgroundColor: '#dcfce7' 
+            },
+            { 
+              id: '3', 
+              title: i18n.t('topic_open_source_guide'), 
+              discussionCount: i18n.t('topic_discussion_count', { amount: '623', tag: i18n.t('topic_hot_month') }), 
+              tag: i18n.t('topic_hot_month'),  
+              color: '#8b5cf6', 
+              backgroundColor: '#ede9fe' 
+            },
          ]);
       }
     } catch (error) {
@@ -129,7 +151,7 @@ const DiscoverScreen: React.FC = () => {
     try {
       await loadData();
     } catch (error) {
-      console.error('刷新失败:', error);
+      console.error(i18n.t('load_failed'), error);
     } finally {
       setIsRefreshing(false);
     }
@@ -201,7 +223,7 @@ const DiscoverScreen: React.FC = () => {
           <View style={styles.logoIcon}>
             <FontAwesome6 name="compass" size={16} color="#ffffff" />
           </View>
-          <Text style={styles.headerTitle}>发现</Text>
+          <Text style={styles.headerTitle}>{i18n.t('p_discover')}</Text>
         </View>
         <TouchableOpacity style={styles.searchButton} onPress={handleSearchButtonPress}>
           <FontAwesome6 name="magnifying-glass" size={14} color="#6b7280" />
@@ -222,7 +244,7 @@ const DiscoverScreen: React.FC = () => {
             <TextInput
               ref={searchInputRef}
               style={styles.searchInput}
-              placeholder="搜索项目、话题或开发者"
+              placeholder={i18n.t('search_placeholder_discover')}
               placeholderTextColor="#6b7280"
               value={searchText}
               onChangeText={setSearchText}
@@ -234,7 +256,7 @@ const DiscoverScreen: React.FC = () => {
 
         {/* 分类导航 */}
         <View style={styles.categoriesSection}>
-          <Text style={styles.sectionTitle}>探索分类</Text>
+          <Text style={styles.sectionTitle}>{i18n.t('explore_categories')}</Text>
           <View style={styles.categoriesGrid}>
             {categories.map((category) => (
               <CategoryCard
@@ -249,9 +271,9 @@ const DiscoverScreen: React.FC = () => {
         {/* 热门话题 */}
         <View style={styles.topicsSection}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>热门话题</Text>
+            <Text style={styles.sectionTitle}>{i18n.t('hot_topics')}</Text>
             <TouchableOpacity onPress={handleViewAllTopicsPress}>
-              <Text style={styles.viewAllText}>查看全部</Text>
+              <Text style={styles.viewAllText}>{i18n.t('view_all')}</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.topicsList}>
@@ -268,9 +290,9 @@ const DiscoverScreen: React.FC = () => {
         {/* 精选项目 */}
         <View style={styles.featuredProjectsSection}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>精选项目</Text>
+            <Text style={styles.sectionTitle}>{i18n.t('featured')}</Text>
             <TouchableOpacity onPress={handleViewAllFeaturedPress}>
-              <Text style={styles.viewAllText}>查看全部</Text>
+              <Text style={styles.viewAllText}>{i18n.t('view_all')}</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.featuredProjectsList}>

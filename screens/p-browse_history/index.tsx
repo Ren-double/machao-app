@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { FontAwesome6 } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import i18n from '../../services/i18n';
 import HistoryCard from './components/HistoryCard';
 import styles from './styles';
 
@@ -41,7 +42,7 @@ const BrowseHistoryScreen = () => {
       language: 'JavaScript',
       languageColor: '#92400e',
       languageBg: '#fef3c7',
-      timeAgo: '2分钟前',
+      timeAgo: i18n.t('minutes_ago', {count: 2}),
     },
     {
       id: 'project-2',
@@ -54,7 +55,7 @@ const BrowseHistoryScreen = () => {
       language: 'Python',
       languageColor: '#1e40af',
       languageBg: '#dbeafe',
-      timeAgo: '15分钟前',
+      timeAgo: i18n.t('minutes_ago', {count: 15}),
     },
     {
       id: 'project-3',
@@ -67,7 +68,7 @@ const BrowseHistoryScreen = () => {
       language: 'Java',
       languageColor: '#166534',
       languageBg: '#dcfce7',
-      timeAgo: '1小时前',
+      timeAgo: i18n.t('hours_ago', {count: 1}),
     },
     {
       id: 'project-4',
@@ -80,7 +81,7 @@ const BrowseHistoryScreen = () => {
       language: 'Go',
       languageColor: '#991b1b',
       languageBg: '#fef2f2',
-      timeAgo: '2小时前',
+      timeAgo: i18n.t('hours_ago', {count: 2}),
     },
     {
       id: 'project-5',
@@ -93,7 +94,7 @@ const BrowseHistoryScreen = () => {
       language: 'JavaScript',
       languageColor: '#92400e',
       languageBg: '#fef3c7',
-      timeAgo: '3小时前',
+      timeAgo: i18n.t('hours_ago', {count: 3}),
     },
     {
       id: 'project-6',
@@ -106,7 +107,7 @@ const BrowseHistoryScreen = () => {
       language: 'TypeScript',
       languageColor: '#3730a3',
       languageBg: '#e0e7ff',
-      timeAgo: '昨天',
+      timeAgo: i18n.t('yesterday'),
     },
   ];
   
@@ -153,7 +154,7 @@ const BrowseHistoryScreen = () => {
       await AsyncStorage.setItem('@browseHistory', JSON.stringify([]));
       setIsClearModalVisible(false);
       setIsLoading(false);
-      Alert.alert('提示', '浏览历史已清空');
+      Alert.alert(i18n.t('success'), i18n.t('clear_success'));
     }, 500);
   }, []);
 
@@ -169,7 +170,7 @@ const BrowseHistoryScreen = () => {
     setIsRefreshing(true);
     setTimeout(() => {
       setIsRefreshing(false);
-      Alert.alert('提示', '刷新成功');
+      Alert.alert(i18n.t('success'), i18n.t('refresh_success'));
     }, 1500);
   }, []);
 
@@ -179,7 +180,7 @@ const BrowseHistoryScreen = () => {
     setIsLoadingMore(true);
     setTimeout(() => {
       setIsLoadingMore(false);
-      Alert.alert('提示', '已加载更多历史记录');
+      Alert.alert(i18n.t('success'), i18n.t('load_more_success'));
     }, 1500);
   }, [isLoadingMore]);
 
@@ -197,10 +198,10 @@ const BrowseHistoryScreen = () => {
   const renderEmptyState = useCallback(() => (
     <View style={styles.emptyStateContainer}>
       <FontAwesome6 name="clock-rotate-left" size={60} color="#d1d5db" />
-      <Text style={styles.emptyStateTitle}>暂无浏览历史</Text>
-      <Text style={styles.emptyStateDescription}>去发现页面看看有什么有趣的项目吧</Text>
+      <Text style={styles.emptyStateTitle}>{i18n.t('empty_history')}</Text>
+      <Text style={styles.emptyStateDescription}>{i18n.t('empty_history_desc')}</Text>
       <TouchableOpacity style={styles.goDiscoverButton} onPress={handleGoDiscover}>
-        <Text style={styles.goDiscoverButtonText}>去发现</Text>
+        <Text style={styles.goDiscoverButtonText}>{i18n.t('go_discover_button')}</Text>
       </TouchableOpacity>
     </View>
   ), [handleGoDiscover]);
@@ -208,7 +209,7 @@ const BrowseHistoryScreen = () => {
   const renderLoadingState = useCallback(() => (
     <View style={styles.loadingStateContainer}>
       <View style={styles.loadingSpinner} />
-      <Text style={styles.loadingStateText}>加载中...</Text>
+      <Text style={styles.loadingStateText}>{i18n.t('loading')}</Text>
     </View>
   ), []);
 
@@ -225,7 +226,7 @@ const BrowseHistoryScreen = () => {
           {isLoadingMore && (
             <FontAwesome6 name="spinner" size={14} color="#ffffff" style={styles.loadingIcon} />
           )}
-          <Text style={styles.loadMoreButtonText}>加载更多</Text>
+          <Text style={styles.loadMoreButtonText}>{i18n.t('load_more')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -239,7 +240,7 @@ const BrowseHistoryScreen = () => {
             <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
               <FontAwesome6 name="arrow-left" size={14} color="#6b7280" />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>浏览历史</Text>
+            <Text style={styles.headerTitle}>{i18n.t('p_browse_history')}</Text>
           </View>
         </View>
         {renderLoadingState()}
@@ -254,11 +255,11 @@ const BrowseHistoryScreen = () => {
           <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
             <FontAwesome6 name="arrow-left" size={14} color="#6b7280" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>浏览历史</Text>
+          <Text style={styles.headerTitle}>{i18n.t('p_browse_history')}</Text>
         </View>
         <TouchableOpacity style={styles.clearButton} onPress={handleClearHistoryPress}>
           <FontAwesome6 name="trash" size={12} color="#ffffff" style={styles.clearButtonIcon} />
-          <Text style={styles.clearButtonText}>清空</Text>
+          <Text style={styles.clearButtonText}>{i18n.t('clear')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -291,14 +292,14 @@ const BrowseHistoryScreen = () => {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>清空浏览历史</Text>
-            <Text style={styles.modalDescription}>确定要清空所有浏览历史吗？此操作不可恢复。</Text>
+            <Text style={styles.modalTitle}>{i18n.t('clear_history_title')}</Text>
+            <Text style={styles.modalDescription}>{i18n.t('clear_history_confirm')}</Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity style={styles.modalCancelButton} onPress={handleCancelClear}>
-                <Text style={styles.modalCancelButtonText}>取消</Text>
+                <Text style={styles.modalCancelButtonText}>{i18n.t('cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.modalConfirmButton} onPress={handleConfirmClear}>
-                <Text style={styles.modalConfirmButtonText}>确定清空</Text>
+                <Text style={styles.modalConfirmButtonText}>{i18n.t('confirm_clear')}</Text>
               </TouchableOpacity>
             </View>
           </View>

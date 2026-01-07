@@ -3,6 +3,7 @@ import { StyleSheet, View, Dimensions, Platform } from 'react-native';
 import { Tabs } from "expo-router";
 import { FontAwesome5, FontAwesome6 } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import i18n from '../../services/i18n';
 
 
 export default function Layout() {
@@ -23,7 +24,7 @@ export default function Layout() {
         />
 
         <Tabs.Screen name="p-home" options={{
-            title: '首页', 
+            title: i18n.t('p_home'), 
             headerShown: false,
             tabBarIcon: ({ color }) => (
                 <FontAwesome6 name="house" size={20} color={color} />
@@ -31,7 +32,7 @@ export default function Layout() {
         }}/>
 
         <Tabs.Screen name="p-discover" options={{
-            title: '发现', 
+            title: i18n.t('p_discover'), 
             headerShown: false,
             tabBarIcon: ({ color }) => (
                 <FontAwesome6 name="compass" size={20} color={color} />
@@ -39,7 +40,7 @@ export default function Layout() {
         }}/>
 
         <Tabs.Screen name="p-my_collections" options={{
-            title: '收藏', 
+            title: i18n.t('p_my_collections'), 
             headerShown: false,
             tabBarIcon: ({ color }) => (
                 <FontAwesome6 name="heart" size={20} color={color} />
@@ -47,7 +48,7 @@ export default function Layout() {
         }}/>
 
         <Tabs.Screen name="p-personal_center" options={{
-            title: '我的', 
+            title: i18n.t('tab_profile'), 
             headerShown: false,
             tabBarIcon: ({ color }) => (
                 <FontAwesome6 name="user" size={20} color={color} />

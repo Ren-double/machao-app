@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FontAwesome6 } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
+import i18n from '../../services/i18n';
 import styles from './styles';
 
 const ContactEmailScreen = () => {
@@ -20,9 +21,9 @@ const ContactEmailScreen = () => {
   const handleCopyEmail = async (email: string) => {
     try {
       await Clipboard.setStringAsync(email);
-      Alert.alert('成功', '邮箱地址已复制到剪贴板');
+      Alert.alert(i18n.t('copy_success'), i18n.t('email_copied'));
     } catch (error) {
-      Alert.alert('错误', '复制失败，请手动复制');
+      Alert.alert(i18n.t('alert_error'), i18n.t('copy_failed'));
     }
   };
 
@@ -33,17 +34,17 @@ const ContactEmailScreen = () => {
       if (supported) {
         await Linking.openURL(emailUrl);
       } else {
-        Alert.alert('提示', '无法打开邮件应用');
+        Alert.alert(i18n.t('alert_tip'), i18n.t('cannot_open_email'));
       }
     } catch (error) {
-      Alert.alert('错误', '打开邮件应用失败');
+      Alert.alert(i18n.t('alert_error'), i18n.t('open_email_failed'));
     }
   };
 
   const emailContacts = [
     {
       id: 'support',
-      title: '客服邮箱',
+      title: i18n.t('support_email_title'),
       email: '1430237147@qq.com',
       icon: 'headset',
       iconColor: '#ef4444',
@@ -51,7 +52,7 @@ const ContactEmailScreen = () => {
     },
     {
       id: 'tech',
-      title: '技术支持',
+      title: i18n.t('tech_support_email_title'),
       email: '1430237147@qq.com',
       icon: 'bug',
       iconColor: '#3b82f6',
@@ -59,7 +60,7 @@ const ContactEmailScreen = () => {
     },
     {
       id: 'business',
-      title: '商务合作',
+      title: i18n.t('business_email_title'),
       email: '1430237147@qq.com',
       icon: 'handshake',
       iconColor: '#10b981',
@@ -68,10 +69,10 @@ const ContactEmailScreen = () => {
   ];
 
   const contactTips = [
-    '• 工作时间：周一至周五 9:00-18:00',
-    '• 请在邮件中详细描述您的问题，以便我们更好地帮助您',
-    '• 如需技术支持，请提供相关截图和错误信息',
-    '• 紧急问题建议直接拨打客服电话：400-123-4567',
+    i18n.t('contact_tip_1'),
+    i18n.t('contact_tip_2'),
+    i18n.t('contact_tip_3'),
+    i18n.t('contact_tip_4'),
   ];
 
   return (
@@ -85,7 +86,7 @@ const ContactEmailScreen = () => {
         >
           <FontAwesome6 name="chevron-left" size={16} color="#111827" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>邮件联系</Text>
+        <Text style={styles.headerTitle}>{i18n.t('contact_email_title')}</Text>
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -95,9 +96,9 @@ const ContactEmailScreen = () => {
             <View style={styles.emailIconContainer}>
               <FontAwesome6 name="envelope" size={32} color="#ef4444" />
             </View>
-            <Text style={styles.emailInfoTitle}>发送邮件给我们</Text>
+            <Text style={styles.emailInfoTitle}>{i18n.t('send_email_to_us')}</Text>
             <Text style={styles.emailInfoDescription}>
-              我们的客服团队会在24小时内回复您的邮件
+              {i18n.t('email_response_time')}
             </Text>
             
             {/* 邮箱卡片列表 */}
@@ -118,7 +119,7 @@ const ContactEmailScreen = () => {
                       <Text style={styles.emailCardEmail}>{contact.email}</Text>
                     </View>
                   </View>
-                  <Text style={styles.copyButton}>复制</Text>
+                  <Text style={styles.copyButton}>{i18n.t('copy')}</Text>
                 </View>
               </TouchableOpacity>
             ))}
@@ -128,14 +129,14 @@ const ContactEmailScreen = () => {
         {/* 快速发送邮件 */}
         <View style={styles.quickEmailSection}>
           <View style={styles.quickEmailContent}>
-            <Text style={styles.quickEmailTitle}>快速发送邮件</Text>
+            <Text style={styles.quickEmailTitle}>{i18n.t('quick_email_title')}</Text>
             <TouchableOpacity 
               style={styles.openEmailButton} 
               onPress={handleOpenEmailApp}
               activeOpacity={0.8}
             >
               <FontAwesome6 name="paper-plane" size={16} color="#ffffff" style={styles.openEmailIcon} />
-              <Text style={styles.openEmailButtonText}>打开邮件应用</Text>
+              <Text style={styles.openEmailButtonText}>{i18n.t('open_email_app')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -143,7 +144,7 @@ const ContactEmailScreen = () => {
         {/* 联系提示 */}
         <View style={styles.contactTipsSection}>
           <View style={styles.contactTipsContent}>
-            <Text style={styles.contactTipsTitle}>联系提示</Text>
+            <Text style={styles.contactTipsTitle}>{i18n.t('contact_tips_title')}</Text>
             <View style={styles.contactTipsList}>
               {contactTips.map((tip, index) => (
                 <Text key={index} style={styles.contactTipItem}>

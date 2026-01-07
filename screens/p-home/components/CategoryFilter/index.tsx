@@ -4,6 +4,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { FontAwesome6 } from '@expo/vector-icons';
 import styles from './styles';
+import i18n from '../../../../services/i18n';
 
 interface CategoryFilterProps {
   selectedLanguages: string[];
@@ -34,7 +35,7 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
       <TouchableOpacity style={styles.filterButton} onPress={onPress}>
         <View style={styles.leftContent}>
           <FontAwesome6 name="filter" size={16} color="#6b7280" />
-          <Text style={styles.filterText}>分类筛选</Text>
+          <Text style={styles.filterText}>{i18n.t('category_filter')}</Text>
           {selectedLanguages.length > 0 && (
             <View style={styles.activeFiltersContainer}>
               {selectedLanguages.map((language, index) => (

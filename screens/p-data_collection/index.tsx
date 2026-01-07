@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FontAwesome6 } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import i18n from '../../services/i18n';
 import styles from './styles';
 
 const STORAGE_KEY = '@data_collection_settings';
@@ -52,24 +53,24 @@ const DataCollectionScreen = () => {
   };
 
   const handlePrivacyPolicyPress = () => {
-    Alert.alert('隐私政策', '跳转到隐私政策页面');
+    Alert.alert(i18n.t('privacy_policy'), i18n.t('view_privacy_policy'));
     // 这里可以添加跳转到隐私政策页面的逻辑
   };
 
   const handleDeleteDataPress = () => {
     Alert.alert(
-      '删除数据',
-      '确定要请求删除您的数据吗？此操作可能需要一定时间处理。',
+      i18n.t('request_delete_data'),
+      i18n.t('delete_data_confirm_msg'),
       [
         {
-          text: '取消',
+          text: i18n.t('cancel'),
           style: 'cancel',
         },
         {
-          text: '确定',
+          text: i18n.t('confirm'),
           style: 'destructive',
           onPress: () => {
-            Alert.alert('提交成功', '数据删除请求已提交，我们将尽快处理。');
+            Alert.alert(i18n.t('submit_success'), i18n.t('delete_data_success_msg'));
           },
         },
       ]
@@ -114,20 +115,20 @@ const DataCollectionScreen = () => {
         >
           <FontAwesome6 name="chevron-left" size={16} color="#111827" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>数据收集设置</Text>
+        <Text style={styles.headerTitle}>{i18n.t('data_collection_title')}</Text>
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* 数据收集选项卡片 */}
         <View style={styles.card}>
           <View style={styles.cardHeader}>
-            <Text style={styles.cardHeaderText}>数据收集选项</Text>
+            <Text style={styles.cardHeaderText}>{i18n.t('data_collection_options')}</Text>
           </View>
           
           <View style={styles.settingItem}>
             <View style={styles.settingItemContent}>
-              <Text style={styles.settingItemTitle}>使用数据收集</Text>
-              <Text style={styles.settingItemDescription}>收集应用使用情况以改进服务</Text>
+              <Text style={styles.settingItemTitle}>{i18n.t('usage_data_title')}</Text>
+              <Text style={styles.settingItemDescription}>{i18n.t('usage_data_desc')}</Text>
             </View>
             <Switch
               value={isUsageDataEnabled}
@@ -139,8 +140,8 @@ const DataCollectionScreen = () => {
 
           <View style={styles.settingItem}>
             <View style={styles.settingItemContent}>
-              <Text style={styles.settingItemTitle}>崩溃数据收集</Text>
-              <Text style={styles.settingItemDescription}>收集应用崩溃信息以修复问题</Text>
+              <Text style={styles.settingItemTitle}>{i18n.t('crash_data_title')}</Text>
+              <Text style={styles.settingItemDescription}>{i18n.t('crash_data_desc')}</Text>
             </View>
             <Switch
               value={isCrashDataEnabled}
@@ -152,8 +153,8 @@ const DataCollectionScreen = () => {
 
           <View style={styles.settingItem}>
             <View style={styles.settingItemContent}>
-              <Text style={styles.settingItemTitle}>个性化广告</Text>
-              <Text style={styles.settingItemDescription}>根据您的兴趣显示相关广告</Text>
+              <Text style={styles.settingItemTitle}>{i18n.t('ads_data_title')}</Text>
+              <Text style={styles.settingItemDescription}>{i18n.t('ads_data_desc')}</Text>
             </View>
             <Switch
               value={isPersonalizedAdsEnabled}
@@ -171,7 +172,7 @@ const DataCollectionScreen = () => {
           activeOpacity={0.7}
         >
           <FontAwesome6 name="shield-halved" size={16} color="#111827" style={styles.actionButtonIcon} />
-          <Text style={styles.actionButtonText}>查看隐私政策</Text>
+          <Text style={styles.actionButtonText}>{i18n.t('view_privacy_policy')}</Text>
         </TouchableOpacity>
 
         {/* 删除数据按钮 */}
@@ -181,14 +182,14 @@ const DataCollectionScreen = () => {
           activeOpacity={0.7}
         >
           <FontAwesome6 name="trash-can" size={16} color="#ef4444" style={styles.actionButtonIcon} />
-          <Text style={styles.dangerButtonText}>请求删除我的数据</Text>
+          <Text style={styles.dangerButtonText}>{i18n.t('request_delete_data')}</Text>
         </TouchableOpacity>
 
         {/* 提示信息 */}
         <View style={styles.infoBox}>
           <FontAwesome6 name="circle-info" size={16} color="#3b82f6" style={styles.infoIcon} />
           <Text style={styles.infoText}>
-            我们重视您的隐私保护，所有收集的数据将严格按照隐私政策进行处理。您可以随时更改这些设置。
+            {i18n.t('data_privacy_info')}
           </Text>
         </View>
       </ScrollView>

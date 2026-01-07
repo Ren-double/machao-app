@@ -106,5 +106,31 @@ export default StyleSheet.create({
     fontSize: 14,
     color: '#2563eb',
   },
+  searchTypeContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  searchTypeButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: '#f3f4f6',
+    marginRight: 8,
+  },
+  searchTypeButtonActive: {
+    backgroundColor: '#2563eb',
+  },
+  searchTypeText: {
+    fontSize: 13,
+    color: '#4b5563',
+  },
+  searchTypeTextActive: {
+    color: '#ffffff',
+    fontWeight: '500',
+  },
 });
 

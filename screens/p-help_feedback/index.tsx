@@ -5,6 +5,7 @@ import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FontAwesome6 } from '@expo/vector-icons';
+import i18n from '../../services/i18n';
 import styles from './styles';
 
 const HelpFeedbackScreen = () => {
@@ -47,14 +48,14 @@ const HelpFeedbackScreen = () => {
         >
           <FontAwesome6 name="chevron-left" size={16} color="#111827" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>帮助与反馈</Text>
+        <Text style={styles.headerTitle}>{i18n.t('p_help_feedback')}</Text>
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* 常见问题 */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>常见问题</Text>
+            <Text style={styles.sectionTitle}>{i18n.t('common_questions')}</Text>
           </View>
           <View style={styles.menuList}>
             <TouchableOpacity 
@@ -67,8 +68,8 @@ const HelpFeedbackScreen = () => {
                   <FontAwesome6 name="user" size={16} color="#3b82f6" />
                 </View>
                 <View style={styles.menuItemText}>
-                  <Text style={styles.menuItemTitle}>账户问题</Text>
-                  <Text style={styles.menuItemSubtitle}>登录、注册、找回密码等</Text>
+                  <Text style={styles.menuItemTitle}>{i18n.t('p_account_issue')}</Text>
+                  <Text style={styles.menuItemSubtitle}>{i18n.t('account_issues_desc')}</Text>
                 </View>
               </View>
               <FontAwesome6 name="chevron-right" size={14} color="#6b7280" />
@@ -84,8 +85,8 @@ const HelpFeedbackScreen = () => {
                   <FontAwesome6 name="gear" size={16} color="#10b981" />
                 </View>
                 <View style={styles.menuItemText}>
-                  <Text style={styles.menuItemTitle}>功能使用</Text>
-                  <Text style={styles.menuItemSubtitle}>如何使用各项功能</Text>
+                  <Text style={styles.menuItemTitle}>{i18n.t('p_function_usage')}</Text>
+                  <Text style={styles.menuItemSubtitle}>{i18n.t('function_usage_desc')}</Text>
                 </View>
               </View>
               <FontAwesome6 name="chevron-right" size={14} color="#6b7280" />
@@ -101,8 +102,8 @@ const HelpFeedbackScreen = () => {
                   <FontAwesome6 name="credit-card" size={16} color="#8b5cf6" />
                 </View>
                 <View style={styles.menuItemText}>
-                  <Text style={styles.menuItemTitle}>支付问题</Text>
-                  <Text style={styles.menuItemSubtitle}>充值、订阅等</Text>
+                  <Text style={styles.menuItemTitle}>{i18n.t('p_payment_issue')}</Text>
+                  <Text style={styles.menuItemSubtitle}>{i18n.t('payment_issues_desc')}</Text>
                 </View>
               </View>
               <FontAwesome6 name="chevron-right" size={14} color="#6b7280" />
@@ -113,7 +114,7 @@ const HelpFeedbackScreen = () => {
         {/* 联系我们 */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>联系我们</Text>
+            <Text style={styles.sectionTitle}>{i18n.t('contact_us')}</Text>
           </View>
           <View style={styles.menuList}>
             <TouchableOpacity 
@@ -126,8 +127,8 @@ const HelpFeedbackScreen = () => {
                   <FontAwesome6 name="comment-dots" size={16} color="#f59e0b" />
                 </View>
                 <View style={styles.menuItemText}>
-                  <Text style={styles.menuItemTitle}>意见反馈</Text>
-                  <Text style={styles.menuItemSubtitle}>提交问题或建议</Text>
+                  <Text style={styles.menuItemTitle}>{i18n.t('p_feedback_form')}</Text>
+                  <Text style={styles.menuItemSubtitle}>{i18n.t('feedback_desc')}</Text>
                 </View>
               </View>
               <FontAwesome6 name="chevron-right" size={14} color="#6b7280" />
@@ -143,8 +144,8 @@ const HelpFeedbackScreen = () => {
                   <FontAwesome6 name="envelope" size={16} color="#ef4444" />
                 </View>
                 <View style={styles.menuItemText}>
-                  <Text style={styles.menuItemTitle}>邮件联系</Text>
-                  <Text style={styles.menuItemSubtitle}>1430237147@qq.com</Text>
+                  <Text style={styles.menuItemTitle}>{i18n.t('email_contact')}</Text>
+                  <Text style={styles.menuItemSubtitle}>{i18n.t('email_address')}</Text>
                 </View>
               </View>
               <FontAwesome6 name="chevron-right" size={14} color="#6b7280" />
@@ -154,8 +155,8 @@ const HelpFeedbackScreen = () => {
 
         {/* 版本信息 */}
         <View style={styles.versionSection}>
-          <Text style={styles.versionText}>当前版本: 1.0.0</Text>
-          <Text style={styles.versionSubtext}>如有任何问题，请随时联系我们</Text>
+          <Text style={styles.versionText}>{i18n.t('current_version', { version: '1.0.0' })}</Text>
+          <Text style={styles.versionSubtext}>{i18n.t('contact_hint')}</Text>
         </View>
       </ScrollView>
     </SafeAreaView>

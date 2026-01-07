@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import { FontAwesome6 } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import i18n from '../../services/i18n';
 import styles from './styles';
 
 interface ProfileData {
@@ -63,8 +64,8 @@ const EditProfileScreen = () => {
         const parsedProfile = JSON.parse(savedProfile);
         setProfileData({
             ...parsedProfile,
-            joinDateStr: joinDateStr || '未知',
-            lastActiveStr: lastActiveStr || '刚刚'
+            joinDateStr: joinDateStr || i18n.t('unknown'),
+            lastActiveStr: lastActiveStr || i18n.t('just_now')
         });
         if (parsedProfile.bio) {
           setBioCharacterCount(parsedProfile.bio.length);
@@ -102,9 +103,9 @@ const EditProfileScreen = () => {
         await AsyncStorage.setItem('@userAvatar', profileData.avatar);
       }
       
-      Alert.alert('成功', '个人资料已成功保存', [
+      Alert.alert(i18n.t('success'), i18n.t('profile_saved'), [
         {
-          text: '确定',
+          text: i18n.t('ok'),
           onPress: () => {
             if (router.canGoBack()) {
               router.back();
@@ -113,7 +114,7 @@ const EditProfileScreen = () => {
         },
       ]);
     } catch (error) {
-      Alert.alert('错误', '保存失败，请重试');
+      Alert.alert(i18n.t('error'), i18n.t('save_failed'));
     } finally {
       setIsSaving(false);
     }
@@ -121,12 +122,12 @@ const EditProfileScreen = () => {
 
   const handleCancelPress = () => {
     Alert.alert(
-      '确认取消',
-      '确定要取消编辑吗？所有未保存的更改将会丢失。',
+      i18n.t('confirm_cancel'),
+      i18n.t('cancel_edit_confirm'),
       [
-        { text: '继续编辑', style: 'cancel' },
+        { text: i18n.t('continue_editing'), style: 'cancel' },
         {
-          text: '确定取消',
+          text: i18n.t('confirm_cancel_button'),
           style: 'destructive',
           onPress: () => {
             if (router.canGoBack()) {
@@ -144,7 +145,7 @@ const EditProfileScreen = () => {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       
       if (status !== 'granted') {
-        Alert.alert('权限不足', '需要访问相册权限来更换头像');
+        Alert.alert(i18n.t('permission_denied'), i18n.t('camera_permission_required'));
         return;
       }
 
@@ -161,7 +162,7 @@ const EditProfileScreen = () => {
         
         // 检查文件大小（5MB限制）
         if (asset.fileSize && asset.fileSize > 5 * 1024 * 1024) {
-          Alert.alert('文件过大', '文件大小不能超过5MB');
+          Alert.alert(i18n.t('file_too_large'), i18n.t('file_size_limit'));
           return;
         }
 
@@ -170,10 +171,10 @@ const EditProfileScreen = () => {
           avatar: asset.uri,
         }));
         
-        Alert.alert('成功', '头像上传成功');
+        Alert.alert(i18n.t('success'), i18n.t('avatar_upload_success'));
       }
     } catch (error) {
-      Alert.alert('错误', '头像上传失败，请重试');
+      Alert.alert(i18n.t('error'), i18n.t('avatar_upload_failed'));
     }
   };
 
@@ -234,7 +235,7 @@ const EditProfileScreen = () => {
             <FontAwesome6 name="chevron-left" size={18} color="#1e293b" />
           </TouchableOpacity>
           
-          <Text style={styles.headerTitle}>编辑个人资料</Text>
+          <Text style={styles.headerTitle}>{i18n.t('p_edit_profile')}</Text>
           
           <TouchableOpacity
             style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
@@ -245,10 +246,10 @@ const EditProfileScreen = () => {
             {isSaving ? (
               <View style={styles.saveButtonContent}>
                 <FontAwesome6 name="spinner" size={14} color="#ffffff" />
-                <Text style={styles.saveButtonText}>保存中...</Text>
+                <Text style={styles.saveButtonText}>{i18n.t('saving')}</Text>
               </View>
             ) : (
-              <Text style={styles.saveButtonText}>保存</Text>
+              <Text style={styles.saveButtonText}>{i18n.t('save')}</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -274,11 +275,11 @@ const EditProfileScreen = () => {
               activeOpacity={0.8}
             >
               <FontAwesome6 name="camera" size={14} color="#64748b" />
-              <Text style={styles.changeAvatarButtonText}>更换头像</Text>
+              <Text style={styles.changeAvatarButtonText}>{i18n.t('change_avatar')}</Text>
             </TouchableOpacity>
             
             <Text style={styles.avatarHint}>
-              支持 JPG、PNG 格式，文件大小不超过 5MB
+              {i18n.t('avatar_hint')}
             </Text>
           </View>
 
@@ -291,7 +292,7 @@ const EditProfileScreen = () => {
                   style={styles.textInput}
                   value={profileData.nickname}
                   onChangeText={handleNicknameChange}
-                  placeholder="昵称"
+                  placeholder={i18n.t('nickname')}
                   placeholderTextColor="#64748b"
                 />
               </View>
@@ -305,7 +306,7 @@ const EditProfileScreen = () => {
                   style={[styles.textInput, styles.bioInput]}
                   value={profileData.bio}
                   onChangeText={handleBioChange}
-                  placeholder="个人简介"
+                  placeholder={i18n.t('bio')}
                   placeholderTextColor="#64748b"
                   multiline
                   textAlignVertical="top"
@@ -325,23 +326,23 @@ const EditProfileScreen = () => {
 
             {/* 附加信息 (只读) */}
             <View style={{ marginTop: 24, padding: 16, backgroundColor: '#f8fafc', borderRadius: 12 }}>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: '#334155', marginBottom: 12 }}>账号信息</Text>
+                <Text style={{ fontSize: 16, fontWeight: '600', color: '#334155', marginBottom: 12 }}>{i18n.t('account_info')}</Text>
                 
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <Text style={{ color: '#64748b' }}>注册时间</Text>
+                    <Text style={{ color: '#64748b' }}>{i18n.t('join_date')}</Text>
                     <Text style={{ color: '#334155', fontWeight: '500' }}>{profileData.joinDateStr}</Text>
                 </View>
                 
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <Text style={{ color: '#64748b' }}>上次活跃</Text>
+                    <Text style={{ color: '#64748b' }}>{i18n.t('last_active')}</Text>
                     <Text style={{ color: '#334155', fontWeight: '500' }}>{profileData.lastActiveStr}</Text>
                 </View>
 
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                    <Text style={{ color: '#64748b' }}>账号状态</Text>
+                    <Text style={{ color: '#64748b' }}>{i18n.t('account_status')}</Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                         <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#10b981', marginRight: 6 }} />
-                        <Text style={{ color: '#10b981', fontWeight: '500' }}>正常</Text>
+                        <Text style={{ color: '#10b981', fontWeight: '500' }}>{i18n.t('status_normal')}</Text>
                     </View>
                 </View>
             </View>

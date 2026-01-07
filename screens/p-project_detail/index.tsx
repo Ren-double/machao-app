@@ -9,6 +9,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Svg, { Defs, Pattern, Path, Rect, Polyline, Circle, Text as SvgText } from 'react-native-svg';
 import styles from './styles';
 import { getRepository, getStarHistory, GitHubProject } from '../../services/github';
+import { getBookmarks, addBookmark, removeBookmark, BookmarkProject, checkIsBookmarked } from '../../services/bookmarks';
+import i18n from '../../services/i18n';
 
 interface ProjectData extends GitHubProject {
   avatar: string;
@@ -44,7 +46,7 @@ const ProjectDetailScreen: React.FC = () => {
          // Fallback for old links or direct access
          if (params.id && params.id.startsWith('project')) {
             // It's a mock ID, ignore or handle gracefully
-            Alert.alert('提示', '该项目为演示数据，无法查看详情');
+            Alert.alert(i18n.t('error'), i18n.t('project_not_found'));
             router.back();
             return;
          }
@@ -93,7 +95,10 @@ const ProjectDetailScreen: React.FC = () => {
         };
         
         setProjectData(mappedData);
-        setIsBookmarked(repo.isBookmarked);
+        
+        // Check local bookmark status
+        const isLocalBookmarked = await checkIsBookmarked(repo.id);
+        setIsBookmarked(isLocalBookmarked);
         
         // Add to history
         addToHistory(mappedData);
@@ -104,13 +109,13 @@ const ProjectDetailScreen: React.FC = () => {
     } catch (error: any) {
       console.error('加载项目数据失败:', error);
       if (error.message === 'ProjectNotFound') {
-        Alert.alert('错误', '项目未找到');
+        Alert.alert(i18n.t('error'), i18n.t('project_not_found'));
       } else if (error.message === 'RateLimitExceeded') {
-        Alert.alert('错误', '访问太频繁，请稍后再试');
+        Alert.alert(i18n.t('error'), i18n.t('rate_limit_exceeded'));
       } else if (error.message === 'Network request failed' || error.name === 'TypeError') {
-        Alert.alert('网络错误', '连接失败，请检查网络或VPN设置');
+        Alert.alert(i18n.t('network_error'), i18n.t('network_error_desc'));
       } else {
-        Alert.alert('错误', '加载项目数据失败，请重试');
+        Alert.alert(i18n.t('error'), i18n.t('load_failed_retry'));
       }
       router.back();
     } finally {
@@ -173,7 +178,7 @@ const ProjectDetailScreen: React.FC = () => {
         language: project.language,
         languageColor: '#6b7280', // Default color
         languageBg: '#f3f4f6',
-        timeAgo: '刚刚'
+        timeAgo: i18n.t('just_now')
       };
       
       history.unshift(newItem);
@@ -198,31 +203,21 @@ const ProjectDetailScreen: React.FC = () => {
     setIsBookmarked(newBookmarkedState);
     
     try {
-      const bookmarksJson = await AsyncStorage.getItem('@bookmarked_projects');
-      let bookmarks = bookmarksJson ? JSON.parse(bookmarksJson) : [];
-      
       if (newBookmarkedState) {
-        // Add
         if (projectData) {
-          // Check if already exists
-          if (!bookmarks.some((b: any) => b.id === projectData.id)) {
-            // Simplify data for storage if needed, or store full projectData
-            // For now, store full projectData as it matches the need for list display
-            bookmarks.unshift(projectData);
-          }
+           await addBookmark(projectData as unknown as BookmarkProject);
+           showToast(i18n.t('bookmark_success'));
         }
       } else {
-        // Remove
         if (projectData) {
-          bookmarks = bookmarks.filter((b: any) => b.id !== projectData.id);
+          await removeBookmark(projectData.id);
+          showToast(i18n.t('bookmark_removed'));
         }
       }
-      
-      await AsyncStorage.setItem('@bookmarked_projects', JSON.stringify(bookmarks));
-      showToast(newBookmarkedState ? '收藏成功' : '取消收藏');
     } catch (e) {
       console.error('Failed to update bookmarks', e);
-      showToast('操作失败');
+      setIsBookmarked(!newBookmarkedState);
+      showToast(i18n.t('operation_failed'));
     }
   };
 
@@ -247,11 +242,11 @@ const ProjectDetailScreen: React.FC = () => {
         if (supported) {
           await Linking.openURL(projectData.html_url);
         } else {
-          Alert.alert('错误', '无法打开链接');
+          Alert.alert(i18n.t('error'), i18n.t('open_link_failed'));
         }
       } catch (error) {
         console.error('打开GitHub链接失败:', error);
-        Alert.alert('错误', '打开链接失败');
+        Alert.alert(i18n.t('error'), i18n.t('open_link_failed'));
       }
     }
   };
@@ -259,15 +254,10 @@ const ProjectDetailScreen: React.FC = () => {
   const handleDocsPress = async () => {
     if (projectData?.docsUrl) {
       try {
-        const supported = await Linking.canOpenURL(projectData.docsUrl);
-        if (supported) {
-          await Linking.openURL(projectData.docsUrl);
-        } else {
-          Alert.alert('错误', '无法打开链接');
-        }
+        await Linking.openURL(projectData.docsUrl);
       } catch (error) {
         console.error('打开文档链接失败:', error);
-        Alert.alert('错误', '打开链接失败');
+        Alert.alert(i18n.t('error'), i18n.t('open_link_failed'));
       }
     }
   };
@@ -301,13 +291,13 @@ const ProjectDetailScreen: React.FC = () => {
   };
 
   const renderChart = () => {
-    if (loadingTrend) return <View style={{height: 150, justifyContent: 'center', alignItems: 'center'}}><Text style={{color: '#6b7280'}}>加载趋势数据...</Text></View>;
-    if (trendData.length === 0) return <View style={{height: 150, justifyContent: 'center', alignItems: 'center'}}><Text style={{color: '#6b7280'}}>暂无趋势数据</Text></View>;
+    if (loadingTrend) return <View style={{height: 150, justifyContent: 'center', alignItems: 'center'}}><Text style={{color: '#6b7280'}}>{i18n.t('loading')}...</Text></View>;
+    if (trendData.length === 0) return <View style={{height: 150, justifyContent: 'center', alignItems: 'center'}}><Text style={{color: '#6b7280'}}>{i18n.t('no_data')}</Text></View>;
 
     const days = selectedTrendPeriod === '7d' ? 7 : selectedTrendPeriod === '30d' ? 30 : 90;
     const data = trendData.slice(-days);
     
-    if (data.length < 2) return <View style={{height: 150, justifyContent: 'center', alignItems: 'center'}}><Text style={{color: '#6b7280'}}>数据不足</Text></View>;
+    if (data.length < 2) return <View style={{height: 150, justifyContent: 'center', alignItems: 'center'}}><Text style={{color: '#6b7280'}}>{i18n.t('no_data')}</Text></View>;
 
     const width = 300;
     const height = 150;
@@ -376,7 +366,7 @@ const ProjectDetailScreen: React.FC = () => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>加载中...</Text>
+          <Text style={styles.loadingText}>{i18n.t('loading')}...</Text>
         </View>
       </SafeAreaView>
     );
@@ -386,9 +376,9 @@ const ProjectDetailScreen: React.FC = () => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>项目数据加载失败</Text>
+          <Text style={styles.errorText}>{i18n.t('load_failed')}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={loadProjectData}>
-            <Text style={styles.retryButtonText}>重试</Text>
+            <Text style={styles.retryButtonText}>{i18n.t('retry')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -402,7 +392,7 @@ const ProjectDetailScreen: React.FC = () => {
         <TouchableOpacity style={styles.headerButton} onPress={handleBackPress}>
           <FontAwesome6 name="arrow-left" size={16} color="#6b7280" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>项目详情</Text>
+        <Text style={styles.headerTitle}>{i18n.t('project_detail')}</Text>
         <TouchableOpacity 
           style={[
             styles.headerButton,
@@ -438,21 +428,21 @@ const ProjectDetailScreen: React.FC = () => {
                 <FontAwesome6 name="star" size={14} color="#f59e0b" solid />
                 <Text style={styles.statValue}>{projectData.stars}</Text>
               </View>
-              <Text style={styles.statLabel}>星标</Text>
+              <Text style={styles.statLabel}>{i18n.t('stars')}</Text>
             </View>
             <View style={styles.statItem}>
               <View style={styles.statValueContainer}>
                 <FontAwesome6 name="code-branch" size={14} color="#6b7280" />
                 <Text style={styles.statValue}>{projectData.forks}</Text>
               </View>
-              <Text style={styles.statLabel}>分支</Text>
+              <Text style={styles.statLabel}>{i18n.t('forks')}</Text>
             </View>
             <View style={styles.statItem}>
               <View style={styles.statValueContainer}>
                 <FontAwesome6 name="users" size={14} color="#6b7280" />
                 <Text style={styles.statValue}>{projectData.contributors}</Text>
               </View>
-              <Text style={styles.statLabel}>贡献者</Text>
+              <Text style={styles.statLabel}>{i18n.t('contributors')}</Text>
             </View>
           </View>
           
@@ -468,7 +458,7 @@ const ProjectDetailScreen: React.FC = () => {
         {/* 项目趋势图 */}
         <View style={styles.trendCard}>
           <View style={styles.trendHeader}>
-            <Text style={styles.trendTitle}>星标趋势</Text>
+            <Text style={styles.trendTitle}>{i18n.t('star_trend')}</Text>
             <View style={styles.trendPeriodContainer}>
               <TouchableOpacity 
                 style={[
@@ -481,7 +471,7 @@ const ProjectDetailScreen: React.FC = () => {
                   styles.trendPeriodButtonText,
                   selectedTrendPeriod === '7d' && styles.trendPeriodButtonTextActive
                 ]}>
-                  7天
+                  {i18n.t('days_7')}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity 
@@ -495,7 +485,7 @@ const ProjectDetailScreen: React.FC = () => {
                   styles.trendPeriodButtonText,
                   selectedTrendPeriod === '30d' && styles.trendPeriodButtonTextActive
                 ]}>
-                  30天
+                  {i18n.t('days_30')}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity 
@@ -509,7 +499,7 @@ const ProjectDetailScreen: React.FC = () => {
                   styles.trendPeriodButtonText,
                   selectedTrendPeriod === '90d' && styles.trendPeriodButtonTextActive
                 ]}>
-                  90天
+                  {i18n.t('days_90')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -533,8 +523,8 @@ const ProjectDetailScreen: React.FC = () => {
                   return (
                      <>
                         <FontAwesome6 name={growth >= 0 ? "arrow-up" : "arrow-down"} size={14} color={growth >= 0 ? "#10b981" : "#ef4444"} />
-                        <Text style={styles.trendGrowthText}>今日新增 {growth >= 0 ? '+' : ''}{growth}</Text>
-                        <Text style={styles.trendGrowthPercent}>较昨日 {percent >= 0 ? '+' : ''}{percent.toFixed(1)}%</Text>
+                        <Text style={styles.trendGrowthText}>{i18n.t('today_growth')} {growth >= 0 ? '+' : ''}{growth}</Text>
+                        <Text style={styles.trendGrowthPercent}>{i18n.t('vs_yesterday')} {percent >= 0 ? '+' : ''}{percent.toFixed(1)}%</Text>
                      </>
                   );
               })()}
@@ -544,26 +534,26 @@ const ProjectDetailScreen: React.FC = () => {
 
         {/* 项目链接 */}
         <View style={styles.linksCard}>
-          <Text style={styles.linksTitle}>相关链接</Text>
+          <Text style={styles.linksTitle}>{i18n.t('related_links')}</Text>
           <View style={styles.linksContainer}>
             <TouchableOpacity style={styles.linkItem} onPress={handleReadmePress}>
               <View style={styles.linkItemLeft}>
                 <FontAwesome6 name="book-open" size={18} color="#1f2937" />
-                <Text style={styles.linkItemText}>阅读文档 (README)</Text>
+                <Text style={styles.linkItemText}>{i18n.t('read_docs')} (README)</Text>
               </View>
               <FontAwesome6 name="chevron-right" size={14} color="#6b7280" />
             </TouchableOpacity>
             <TouchableOpacity style={styles.linkItem} onPress={handleGithubPress}>
               <View style={styles.linkItemLeft}>
                 <FontAwesome6 name="github" size={18} color="#1f2937" />
-                <Text style={styles.linkItemText}>GitHub 仓库</Text>
+                <Text style={styles.linkItemText}>{i18n.t('github_repo')}</Text>
               </View>
               <FontAwesome6 name="external-link" size={14} color="#6b7280" />
             </TouchableOpacity>
             <TouchableOpacity style={styles.linkItem} onPress={handleDocsPress}>
               <View style={styles.linkItemLeft}>
                 <FontAwesome6 name="book" size={18} color="#1f2937" />
-                <Text style={styles.linkItemText}>官方文档</Text>
+                <Text style={styles.linkItemText}>{i18n.t('official_docs')}</Text>
               </View>
               <FontAwesome6 name="external-link" size={14} color="#6b7280" />
             </TouchableOpacity>
@@ -578,7 +568,7 @@ const ProjectDetailScreen: React.FC = () => {
       <View style={styles.bottomActionBar}>
         <TouchableOpacity style={styles.githubButton} onPress={handleGithubPress}>
           <FontAwesome6 name="github" size={16} color="#ffffff" />
-          <Text style={styles.githubButtonText}>前往 GitHub</Text>
+          <Text style={styles.githubButtonText}>{i18n.t('go_to_github')}</Text>
         </TouchableOpacity>
       </View>
 

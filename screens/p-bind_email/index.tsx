@@ -5,6 +5,7 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, KeyboardAvo
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FontAwesome6 } from '@expo/vector-icons';
+import i18n from '../../services/i18n';
 import styles from './styles';
 
 const BindEmailScreen = () => {
@@ -28,7 +29,7 @@ const BindEmailScreen = () => {
 
   const handleSendVerificationCode = async () => {
     if (!email || !validateEmail(email)) {
-      Alert.alert('提示', '请输入正确的电子邮箱');
+      Alert.alert(i18n.t('prompt'), i18n.t('invalid_email'));
       return;
     }
 
@@ -38,7 +39,7 @@ const BindEmailScreen = () => {
       // 模拟发送验证码API调用
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      Alert.alert('提示', '验证码已发送到您的邮箱');
+      Alert.alert(i18n.t('prompt'), i18n.t('code_sent_to_email'));
       
       // 开始倒计时
       setCountdown(60);
@@ -56,7 +57,7 @@ const BindEmailScreen = () => {
       }, 1000);
       
     } catch (error) {
-      Alert.alert('错误', '验证码发送失败，请重试');
+      Alert.alert(i18n.t('error'), i18n.t('send_failed'));
     } finally {
       setIsCodeSending(false);
     }
@@ -64,12 +65,12 @@ const BindEmailScreen = () => {
 
   const handleSubmit = async () => {
     if (!email || !validateEmail(email)) {
-      Alert.alert('提示', '请输入正确的电子邮箱');
+      Alert.alert(i18n.t('prompt'), i18n.t('invalid_email'));
       return;
     }
 
     if (!verificationCode || verificationCode.length !== 6) {
-      Alert.alert('提示', '请输入6位验证码');
+      Alert.alert(i18n.t('prompt'), i18n.t('enter_6_digit_code'));
       return;
     }
 
@@ -77,9 +78,9 @@ const BindEmailScreen = () => {
       // 模拟绑定邮箱API调用
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      Alert.alert('成功', '邮箱绑定成功', [
+      Alert.alert(i18n.t('success'), i18n.t('email_bind_success'), [
         {
-          text: '确定',
+          text: i18n.t('confirm'),
           onPress: () => {
             if (router.canGoBack()) {
               router.back();
@@ -89,7 +90,7 @@ const BindEmailScreen = () => {
       ]);
       
     } catch (error) {
-      Alert.alert('错误', '绑定失败，请重试');
+      Alert.alert(i18n.t('error'), i18n.t('bind_failed'));
     }
   };
 
@@ -116,7 +117,7 @@ const BindEmailScreen = () => {
           >
             <FontAwesome6 name="chevron-left" size={16} color="#111827" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>绑定邮箱</Text>
+          <Text style={styles.headerTitle}>{i18n.t('bind_email')}</Text>
         </View>
 
         <ScrollView
@@ -130,10 +131,10 @@ const BindEmailScreen = () => {
             <View style={styles.formCard}>
               {/* 邮箱输入框 */}
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>电子邮箱</Text>
+                <Text style={styles.inputLabel}>{i18n.t('email')}</Text>
                 <TextInput
                   style={styles.textInput}
-                  placeholder="请输入电子邮箱"
+                  placeholder={i18n.t('enter_email')}
                   placeholderTextColor="#9CA3AF"
                   value={email}
                   onChangeText={setEmail}
@@ -145,11 +146,11 @@ const BindEmailScreen = () => {
 
               {/* 验证码输入框 */}
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>验证码</Text>
+                <Text style={styles.inputLabel}>{i18n.t('verification_code')}</Text>
                 <View style={styles.verificationCodeWrapper}>
                   <TextInput
                     style={styles.verificationCodeInput}
-                    placeholder="请输入验证码"
+                    placeholder={i18n.t('enter_verification_code')}
                     placeholderTextColor="#9CA3AF"
                     value={verificationCode}
                     onChangeText={setVerificationCode}
@@ -170,10 +171,10 @@ const BindEmailScreen = () => {
                       (isCodeSending || countdown > 0) && styles.sendCodeButtonTextDisabled
                     ]}>
                       {isCodeSending 
-                        ? '发送中...' 
+                        ? i18n.t('sending') 
                         : countdown > 0 
-                          ? `${countdown}秒后重新获取`
-                          : '获取验证码'
+                          ? i18n.t('resend_code_after', { count: countdown })
+                          : i18n.t('get_verification_code')
                       }
                     </Text>
                   </TouchableOpacity>
@@ -186,7 +187,7 @@ const BindEmailScreen = () => {
                 onPress={handleSubmit}
                 activeOpacity={0.8}
               >
-                <Text style={styles.submitButtonText}>确认绑定</Text>
+                <Text style={styles.submitButtonText}>{i18n.t('confirm_bind')}</Text>
               </TouchableOpacity>
             </View>
           </View>

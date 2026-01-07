@@ -5,6 +5,7 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, KeyboardAvo
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FontAwesome6 } from '@expo/vector-icons';
+import i18n from '../../services/i18n';
 import styles from './styles';
 
 const BindPhoneScreen = () => {
@@ -27,7 +28,7 @@ const BindPhoneScreen = () => {
 
   const handleSendVerificationCode = () => {
     if (!validatePhoneNumber(phoneNumber)) {
-      Alert.alert('提示', '请输入正确的手机号码');
+      Alert.alert(i18n.t('prompt'), i18n.t('invalid_phone_number'));
       return;
     }
 
@@ -49,23 +50,23 @@ const BindPhoneScreen = () => {
       });
     }, 1000);
 
-    Alert.alert('提示', '验证码已发送');
+    Alert.alert(i18n.t('prompt'), i18n.t('code_sent'));
   };
 
   const handleSubmit = () => {
     if (!validatePhoneNumber(phoneNumber)) {
-      Alert.alert('提示', '请输入正确的手机号码');
+      Alert.alert(i18n.t('prompt'), i18n.t('invalid_phone_number'));
       return;
     }
 
     if (!verificationCode || verificationCode.length !== 6) {
-      Alert.alert('提示', '请输入6位验证码');
+      Alert.alert(i18n.t('prompt'), i18n.t('enter_6_digit_code'));
       return;
     }
 
-    Alert.alert('提示', '手机绑定成功', [
+    Alert.alert(i18n.t('prompt'), i18n.t('phone_bind_success'), [
       {
-        text: '确定',
+        text: i18n.t('confirm'),
         onPress: () => {
           if (router.canGoBack()) {
             router.back();
@@ -98,7 +99,7 @@ const BindPhoneScreen = () => {
           >
             <FontAwesome6 name="chevron-left" size={16} color="#111827" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>绑定手机</Text>
+          <Text style={styles.headerTitle}>{i18n.t('bind_phone')}</Text>
         </View>
 
         <ScrollView
@@ -111,10 +112,10 @@ const BindPhoneScreen = () => {
             <View style={styles.formCard}>
               {/* 手机号码输入 */}
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>手机号码</Text>
+                <Text style={styles.inputLabel}>{i18n.t('phone_number')}</Text>
                 <TextInput
                   style={styles.textInput}
-                  placeholder="请输入手机号码"
+                  placeholder={i18n.t('enter_phone_number')}
                   placeholderTextColor="#9CA3AF"
                   value={phoneNumber}
                   onChangeText={setPhoneNumber}
@@ -125,11 +126,11 @@ const BindPhoneScreen = () => {
 
               {/* 验证码输入 */}
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>验证码</Text>
+                <Text style={styles.inputLabel}>{i18n.t('verification_code')}</Text>
                 <View style={styles.verificationCodeWrapper}>
                   <TextInput
                     style={styles.verificationCodeInput}
-                    placeholder="请输入验证码"
+                    placeholder={i18n.t('enter_verification_code')}
                     placeholderTextColor="#9CA3AF"
                     value={verificationCode}
                     onChangeText={setVerificationCode}
@@ -152,8 +153,8 @@ const BindPhoneScreen = () => {
                       ]}
                     >
                       {isCountdownActive
-                        ? `${countdownSeconds}秒后重新获取`
-                        : '获取验证码'}
+                        ? i18n.t('resend_code_after', { count: countdownSeconds })
+                        : i18n.t('get_verification_code')}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -165,7 +166,7 @@ const BindPhoneScreen = () => {
                 onPress={handleSubmit}
                 activeOpacity={0.8}
               >
-                <Text style={styles.submitButtonText}>确认绑定</Text>
+                <Text style={styles.submitButtonText}>{i18n.t('confirm_bind')}</Text>
               </TouchableOpacity>
             </View>
           </View>

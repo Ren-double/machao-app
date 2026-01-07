@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Modal, TouchableOpacity, StyleSheet, Platform, Image } from 'react-native';
 import { FontAwesome6 } from '@expo/vector-icons';
+import i18n from '../services/i18n';
 
 interface DonationModalProps {
   visible: boolean;
@@ -17,8 +18,8 @@ const DonationModal: React.FC<DonationModalProps> = ({ visible, onClose }) => {
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>支持我们</Text>
-          <Text style={styles.modalSubtitle}>如果您觉得这个项目对您有帮助，欢迎请作者喝杯咖啡 ☕️</Text>
+          <Text style={styles.modalTitle}>{i18n.t('support_us')}</Text>
+          <Text style={styles.modalSubtitle}>{i18n.t('donate_desc')}</Text>
           
           <View style={styles.qrCodeContainer}>
             {/* 
@@ -32,7 +33,7 @@ const DonationModal: React.FC<DonationModalProps> = ({ visible, onClose }) => {
 
             {/* <View style={styles.qrCodePlaceholder}>
               <FontAwesome6 name="qrcode" size={64} color="#d1d5db" />
-              <Text style={styles.qrCodePlaceholderText}>在此处放置收款二维码</Text>
+              <Text style={styles.qrCodePlaceholderText}>{i18n.t('qr_code_placeholder')}</Text>
             </View> */}
           </View>
 
@@ -41,7 +42,7 @@ const DonationModal: React.FC<DonationModalProps> = ({ visible, onClose }) => {
             onPress={onClose}
             activeOpacity={0.8}
           >
-            <Text style={styles.closeButtonText}>关闭</Text>
+            <Text style={styles.closeButtonText}>{i18n.t('close')}</Text>
           </TouchableOpacity>
         </View>
       </View>

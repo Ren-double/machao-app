@@ -8,6 +8,7 @@ import { FontAwesome6 } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
+import i18n from '../../services/i18n';
 import styles from './styles';
 import { logoutUser } from '../../services/auth';
 import DonationModal from '../../components/DonationModal';
@@ -134,14 +135,15 @@ const PersonalCenterScreen = () => {
 
   const handleLogoutPress = () => {
     Alert.alert(
-      '退出登录',
-      '确定要退出登录吗？',
+      i18n.t('logout'),
+      i18n.t('logout_confirm'),
       [
-        { text: '取消', style: 'cancel' },
+        { text: i18n.t('cancel'), style: 'cancel' },
         {
-          text: '确定',
+          text: i18n.t('confirm'),
           style: 'destructive',
-          onPress: () => {
+          onPress: async () => {
+            await logoutUser();
             router.replace('/p-login_register');
           },
         },
@@ -153,7 +155,7 @@ const PersonalCenterScreen = () => {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('权限不足', '需要访问相册权限来更换头像');
+        Alert.alert(i18n.t('permission_denied'), i18n.t('camera_permission_required'));
         return;
       }
 
@@ -175,9 +177,9 @@ const PersonalCenterScreen = () => {
               if (!prev) return null;
               return { ...prev, avatar: result.assets[0].uri };
             });
-            Alert.alert('成功', '头像上传成功');
+            Alert.alert(i18n.t('success'), i18n.t('avatar_upload_success'));
           } catch (error) {
-            Alert.alert('错误', '头像上传失败，请重试');
+            Alert.alert(i18n.t('error'), i18n.t('avatar_upload_failed'));
           } finally {
             setIsAvatarUploading(false);
           }
@@ -185,7 +187,7 @@ const PersonalCenterScreen = () => {
       }
     } catch (error) {
       console.error('头像上传失败:', error);
-      Alert.alert('错误', '头像上传失败，请重试');
+      Alert.alert(i18n.t('error'), i18n.t('avatar_upload_failed'));
     }
   };
 
@@ -239,7 +241,7 @@ const PersonalCenterScreen = () => {
     <SafeAreaView style={styles.container}>
       {/* 顶部导航栏 */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>个人中心</Text>
+        <Text style={styles.headerTitle}>{i18n.t('p_personal_center')}</Text>
         <TouchableOpacity
           style={styles.settingsButton}
           onPress={handleSettingsPress}
@@ -286,15 +288,15 @@ const PersonalCenterScreen = () => {
               activeOpacity={0.8}
             >
               <FontAwesome6 name="pen" size={12} color="#ffffff" />
-              <Text style={styles.editProfileButtonText}>编辑</Text>
+              <Text style={styles.editProfileButtonText}>{i18n.t('edit')}</Text>
             </TouchableOpacity>
           </View>
 
           {/* 统计数据 */}
           <View style={styles.statsContainer}>
-            {renderStatCard(userData!.collectionsCount, '收藏', ['#667eea', '#764ba2'])}
-            {renderStatCard(userData!.browseCount, '浏览', ['#f093fb', '#f5576c'])}
-            {renderStatCard(userData!.joinDays, '天数', ['#4facfe', '#00f2fe'])}
+            {renderStatCard(userData!.collectionsCount, i18n.t('p_my_collections'), ['#667eea', '#764ba2'])}
+            {renderStatCard(userData!.browseCount, i18n.t('browse'), ['#f093fb', '#f5576c'])}
+            {renderStatCard(userData!.joinDays, i18n.t('days'), ['#4facfe', '#00f2fe'])}
           </View>
         </View>
 
@@ -302,14 +304,14 @@ const PersonalCenterScreen = () => {
         <View style={styles.menuSection}>
           {/* 我的内容 */}
           <View style={styles.menuGroup}>
-            <Text style={styles.menuGroupTitle}>我的内容</Text>
+            <Text style={styles.menuGroupTitle}>{i18n.t('my_content')}</Text>
             <View style={styles.menuItemsContainer}>
               {renderMenuItem(
                 'heart',
                 '#ef4444',
                 '#fef2f2',
-                '我的收藏',
-                '查看收藏的项目',
+                i18n.t('my_collections'),
+                i18n.t('view_collections'),
                 handleMyCollectionsPress,
                 userData!.collectionsCount
               )}
@@ -317,8 +319,8 @@ const PersonalCenterScreen = () => {
                 'clock-rotate-left',
                 '#3b82f6',
                 '#eff6ff',
-                '浏览历史',
-                '查看浏览记录',
+                i18n.t('browse_history'),
+                i18n.t('view_history'),
                 handleBrowseHistoryPress,
                 userData!.browseCount
               )}
@@ -327,22 +329,22 @@ const PersonalCenterScreen = () => {
 
           {/* 设置 */}
           <View style={styles.menuGroup}>
-            <Text style={styles.menuGroupTitle}>设置</Text>
+            <Text style={styles.menuGroupTitle}>{i18n.t('settings')}</Text>
             <View style={styles.menuItemsContainer}>
               {renderMenuItem(
                 'sliders',
                 '#10b981',
                 '#f0fdf4',
-                '兴趣设置',
-                '个性化推荐设置',
+                i18n.t('interest_settings'),
+                i18n.t('personalize_recommendations'),
                 handleInterestSettingsPress
               )}
               {renderMenuItem(
                 'shield-halved',
                 '#8b5cf6',
                 '#faf5ff',
-                '账户安全',
-                '密码、绑定等',
+                i18n.t('account_security'),
+                i18n.t('password_binding_etc'),
                 handleAccountSecurityPress
               )}
             </View>
@@ -350,30 +352,30 @@ const PersonalCenterScreen = () => {
 
           {/* 其他 */}
           <View style={styles.menuGroup}>
-            <Text style={styles.menuGroupTitle}>其他</Text>
+            <Text style={styles.menuGroupTitle}>{i18n.t('others')}</Text>
             <View style={styles.menuItemsContainer}>
               {renderMenuItem(
                 'mug-hot',
                 '#ec4899',
                 '#fce7f3',
-                '支持我们',
-                '请作者喝杯咖啡',
+                i18n.t('support_us'),
+                i18n.t('buy_coffee'),
                 handleDonatePress
               )}
               {renderMenuItem(
                 'circle-question',
                 '#f59e0b',
                 '#fffbeb',
-                '帮助与反馈',
-                '使用帮助和问题反馈',
+                i18n.t('help_feedback'),
+                i18n.t('help_feedback_desc'),
                 handleHelpFeedbackPress
               )}
               {renderMenuItem(
                 'circle-info',
                 '#6b7280',
                 '#f9fafb',
-                '关于码潮',
-                '版本信息和使用协议',
+                i18n.t('about_app'),
+                i18n.t('about_app_desc'),
                 handleAboutAppPress
               )}
             </View>
@@ -388,13 +390,13 @@ const PersonalCenterScreen = () => {
             activeOpacity={0.8}
           >
             <FontAwesome6 name="right-from-bracket" size={14} color="#ef4444" />
-            <Text style={styles.logoutButtonText}>退出登录</Text>
+            <Text style={styles.logoutButtonText}>{i18n.t('logout')}</Text>
           </TouchableOpacity>
         </View>
         </>
       ) : (
         <View style={{ padding: 20, alignItems: 'center', marginTop: 50 }}>
-          <Text>正在加载用户信息...</Text>
+          <Text>{i18n.t('loading_user_info')}</Text>
         </View>
       )}
       </ScrollView>

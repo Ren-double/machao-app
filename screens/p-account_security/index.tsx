@@ -1,5 +1,5 @@
 
-
+import i18n from '../../services/i18n';
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -44,15 +44,15 @@ const AccountSecurityScreen = () => {
 
   const handleDeleteAccountPress = () => {
     Alert.alert(
-      '注销账户',
-      '确定要注销账户吗？此操作不可撤销。',
+      i18n.t('unregister_account'),
+      i18n.t('unregister_account_confirm'),
       [
         {
-          text: '取消',
+          text: i18n.t('cancel'),
           style: 'cancel',
         },
         {
-          text: '确定',
+          text: i18n.t('confirm'),
           style: 'destructive',
           onPress: () => {
             console.log('执行账户注销操作');
@@ -74,14 +74,14 @@ const AccountSecurityScreen = () => {
         >
           <FontAwesome6 name="chevron-left" size={16} color="#111827" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>账户安全</Text>
+        <Text style={styles.headerTitle}>{i18n.t('account_security')}</Text>
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* 账户安全选项 */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>账户安全</Text>
+            <Text style={styles.sectionTitle}>{i18n.t('account_security')}</Text>
           </View>
           
           <TouchableOpacity 
@@ -94,8 +94,8 @@ const AccountSecurityScreen = () => {
                 <FontAwesome6 name="lock" size={16} color="#3b82f6" />
               </View>
               <View style={styles.menuItemTextContainer}>
-                <Text style={styles.menuItemTitle}>修改密码</Text>
-                <Text style={styles.menuItemSubtitle}>定期更换密码以保障安全</Text>
+                <Text style={styles.menuItemTitle}>{i18n.t('change_password')}</Text>
+                <Text style={styles.menuItemSubtitle}>{i18n.t('change_password_desc')}</Text>
               </View>
             </View>
             <FontAwesome6 name="chevron-right" size={14} color="#6b7280" />
@@ -111,8 +111,8 @@ const AccountSecurityScreen = () => {
                 <FontAwesome6 name="mobile-screen" size={16} color="#10b981" />
               </View>
               <View style={styles.menuItemTextContainer}>
-                <Text style={styles.menuItemTitle}>绑定手机</Text>
-                <Text style={styles.menuItemSubtitle}>未绑定</Text>
+                <Text style={styles.menuItemTitle}>{i18n.t('bind_phone')}</Text>
+                <Text style={styles.menuItemSubtitle}>{i18n.t('not_bound')}</Text>
               </View>
             </View>
             <FontAwesome6 name="chevron-right" size={14} color="#6b7280" />
@@ -128,8 +128,8 @@ const AccountSecurityScreen = () => {
                 <FontAwesome6 name="envelope" size={16} color="#8b5cf6" />
               </View>
               <View style={styles.menuItemTextContainer}>
-                <Text style={styles.menuItemTitle}>绑定邮箱</Text>
-                <Text style={styles.menuItemSubtitle}>未绑定</Text>
+                <Text style={styles.menuItemTitle}>{i18n.t('bind_email')}</Text>
+                <Text style={styles.menuItemSubtitle}>{i18n.t('not_bound')}</Text>
               </View>
             </View>
             <FontAwesome6 name="chevron-right" size={14} color="#6b7280" />
@@ -139,7 +139,7 @@ const AccountSecurityScreen = () => {
         {/* 登录设备管理 */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>登录设备管理</Text>
+            <Text style={styles.sectionTitle}>{i18n.t('login_device_management')}</Text>
           </View>
           
           <TouchableOpacity 
@@ -152,7 +152,7 @@ const AccountSecurityScreen = () => {
                 <FontAwesome6 name="mobile-screen" size={16} color="#f59e0b" />
               </View>
               <View style={styles.menuItemTextContainer}>
-                <Text style={styles.menuItemTitle}>当前设备</Text>
+                <Text style={styles.menuItemTitle}>{i18n.t('current_device')}</Text>
                 <Text style={styles.menuItemSubtitle}>{deviceName}</Text>
               </View>
             </View>
@@ -168,7 +168,7 @@ const AccountSecurityScreen = () => {
             activeOpacity={0.7}
           >
             <FontAwesome6 name="user-slash" size={16} color="#ef4444" style={styles.deleteAccountIcon} />
-            <Text style={styles.deleteAccountText}>注销账户</Text>
+            <Text style={styles.deleteAccountText}>{i18n.t('unregister_account')}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

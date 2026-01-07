@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import { FontAwesome6 } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Updates from 'expo-updates';
+import i18n from '../../services/i18n';
 import styles from './styles';
 
 const STORAGE_KEY = '@language_settings';
@@ -81,26 +82,26 @@ const LanguageSettingsScreen = () => {
     }
 
     Alert.alert(
-      '确认更改',
-      `确定要将应用语言更改为"${language.name}"吗？更改后应用需要重启。`,
+      i18n.t('confirm_change'),
+      i18n.t('change_language_confirm', { language: language.name }),
       [
         {
-          text: '取消',
+          text: i18n.t('cancel'),
           style: 'cancel',
         },
         {
-          text: '确定',
+          text: i18n.t('confirm'),
           onPress: async () => {
             try {
               await AsyncStorage.setItem(STORAGE_KEY, language.id);
               setSelectedLanguageId(language.id);
               
               Alert.alert(
-                '设置已保存',
-                '语言设置已保存，应用将重启以应用新设置。',
+                i18n.t('settings_saved'),
+                i18n.t('restart_app_hint'),
                 [
                   {
-                    text: '确定',
+                    text: i18n.t('confirm'),
                     onPress: async () => {
                       try {
                         await Updates.reloadAsync();
@@ -116,7 +117,7 @@ const LanguageSettingsScreen = () => {
               );
             } catch (error) {
               console.error('Failed to save language settings:', error);
-              Alert.alert('错误', '保存语言设置失败');
+              Alert.alert(i18n.t('error'), i18n.t('save_error'));
             }
           },
         },
@@ -161,14 +162,14 @@ const LanguageSettingsScreen = () => {
         >
           <FontAwesome6 name="chevron-left" size={16} color="#111827" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>语言设置</Text>
+        <Text style={styles.headerTitle}>{i18n.t('p_language_settings')}</Text>
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* 语言选择卡片 */}
         <View style={styles.languageCard}>
           <View style={styles.languageCardHeader}>
-            <Text style={styles.languageCardTitle}>选择语言</Text>
+            <Text style={styles.languageCardTitle}>{i18n.t('select_language')}</Text>
           </View>
           <View style={styles.languageList}>
             {languageOptions.map(renderLanguageItem)}
@@ -180,7 +181,7 @@ const LanguageSettingsScreen = () => {
           <View style={styles.tipContent}>
             <FontAwesome6 name="circle-info" size={14} color="#3b82f6" style={styles.tipIcon} />
             <Text style={styles.tipText}>
-              更改语言设置后，应用需要重启才能生效。
+              {i18n.t('restart_app_tip')}
             </Text>
           </View>
         </View>

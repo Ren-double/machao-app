@@ -5,6 +5,7 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FontAwesome6 } from '@expo/vector-icons';
+import i18n from '../../services/i18n';
 import styles from './styles';
 
 const ChangePasswordScreen = () => {
@@ -26,27 +27,27 @@ const ChangePasswordScreen = () => {
   // 表单验证
   const validateForm = () => {
     if (!currentPassword.trim()) {
-      Alert.alert('提示', '请输入当前密码');
+      Alert.alert(i18n.t('prompt'), i18n.t('enter_current_password'));
       return false;
     }
 
     if (!newPassword.trim()) {
-      Alert.alert('提示', '请输入新密码');
+      Alert.alert(i18n.t('prompt'), i18n.t('enter_new_password'));
       return false;
     }
 
     if (!confirmPassword.trim()) {
-      Alert.alert('提示', '请确认新密码');
+      Alert.alert(i18n.t('prompt'), i18n.t('enter_confirm_new_password'));
       return false;
     }
 
     if (newPassword !== confirmPassword) {
-      Alert.alert('提示', '两次输入的新密码不一致');
+      Alert.alert(i18n.t('prompt'), i18n.t('password_mismatch'));
       return false;
     }
 
     if (newPassword.length < 8 || newPassword.length > 20) {
-      Alert.alert('提示', '密码长度应为8-20位');
+      Alert.alert(i18n.t('prompt'), i18n.t('password_length_error'));
       return false;
     }
 
@@ -54,7 +55,7 @@ const ChangePasswordScreen = () => {
     const hasLetter = /[a-zA-Z]/.test(newPassword);
     const hasNumber = /[0-9]/.test(newPassword);
     if (!hasLetter || !hasNumber) {
-      Alert.alert('提示', '密码必须包含字母和数字');
+      Alert.alert(i18n.t('prompt'), i18n.t('password_complexity_error'));
       return false;
     }
 
@@ -73,9 +74,9 @@ const ChangePasswordScreen = () => {
       // 模拟API调用
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      Alert.alert('成功', '密码修改成功', [
+      Alert.alert(i18n.t('success'), i18n.t('change_password_success'), [
         {
-          text: '确定',
+          text: i18n.t('confirm'),
           onPress: () => {
             if (router.canGoBack()) {
               router.back();
@@ -84,7 +85,7 @@ const ChangePasswordScreen = () => {
         },
       ]);
     } catch (error) {
-      Alert.alert('错误', '密码修改失败，请重试');
+      Alert.alert(i18n.t('error'), i18n.t('change_password_failed'));
     } finally {
       setIsLoading(false);
     }
@@ -101,7 +102,7 @@ const ChangePasswordScreen = () => {
         >
           <FontAwesome6 name="chevron-left" size={16} color="#111827" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>修改密码</Text>
+        <Text style={styles.headerTitle}>{i18n.t('change_password')}</Text>
       </View>
 
       {/* 主要内容区域 */}
@@ -110,10 +111,10 @@ const ChangePasswordScreen = () => {
           <View style={styles.formCard}>
             {/* 当前密码 */}
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>当前密码</Text>
+              <Text style={styles.inputLabel}>{i18n.t('current_password')}</Text>
               <TextInput
                 style={styles.textInput}
-                placeholder="请输入当前密码"
+                placeholder={i18n.t('enter_current_password')}
                 placeholderTextColor="#9CA3AF"
                 value={currentPassword}
                 onChangeText={setCurrentPassword}
@@ -125,10 +126,10 @@ const ChangePasswordScreen = () => {
 
             {/* 新密码 */}
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>新密码</Text>
+              <Text style={styles.inputLabel}>{i18n.t('new_password')}</Text>
               <TextInput
                 style={styles.textInput}
-                placeholder="请输入新密码"
+                placeholder={i18n.t('enter_new_password')}
                 placeholderTextColor="#9CA3AF"
                 value={newPassword}
                 onChangeText={setNewPassword}
@@ -136,15 +137,15 @@ const ChangePasswordScreen = () => {
                 autoCapitalize="none"
                 autoCorrect={false}
               />
-              <Text style={styles.inputHint}>密码长度8-20位，包含字母和数字</Text>
+              <Text style={styles.inputHint}>{i18n.t('password_hint')}</Text>
             </View>
 
             {/* 确认新密码 */}
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>确认新密码</Text>
+              <Text style={styles.inputLabel}>{i18n.t('confirm_new_password')}</Text>
               <TextInput
                 style={styles.textInput}
-                placeholder="请再次输入新密码"
+                placeholder={i18n.t('enter_confirm_new_password')}
                 placeholderTextColor="#9CA3AF"
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
@@ -162,7 +163,7 @@ const ChangePasswordScreen = () => {
               activeOpacity={0.8}
             >
               <Text style={styles.submitButtonText}>
-                {isLoading ? '修改中...' : '确认修改'}
+                {isLoading ? i18n.t('changing_password') : i18n.t('confirm_change')}
               </Text>
             </TouchableOpacity>
           </View>

@@ -1,3 +1,5 @@
+import i18n from '../../services/i18n';
+
 
 
 import React, { useState, useCallback, useEffect } from 'react';
@@ -123,10 +125,18 @@ const CategoryFilterScreen = () => {
   const renderSelectedFilterTag = useCallback((type: 'language' | 'project_type', value: string) => {
     const iconName = type === 'language' ? 'code' : 'folder';
     
+    let displayText = value;
+    if (type === 'project_type') {
+      const found = PROJECT_TYPES_DATA.find(pt => pt.value === value);
+      if (found) {
+        displayText = i18n.t(found.label);
+      }
+    }
+
     return (
       <View key={`${type}-${value}`} style={styles.selectedFilterTag}>
         <FontAwesome6 name={iconName} size={12} color="#ffffff" style={styles.selectedFilterIcon} />
-        <Text style={styles.selectedFilterText}>{value}</Text>
+        <Text style={styles.selectedFilterText}>{displayText}</Text>
         <TouchableOpacity
           style={styles.removeFilterButton}
           onPress={() => handleRemoveFilter(type, value)}
@@ -179,7 +189,7 @@ const CategoryFilterScreen = () => {
           style={styles.projectTypeIcon}
         />
         <Text style={[styles.filterOptionText, isSelected && styles.filterOptionTextSelected]}>
-          {projectType.label}
+          {i18n.t(projectType.label)}
         </Text>
       </TouchableOpacity>
     );
@@ -196,13 +206,13 @@ const CategoryFilterScreen = () => {
         >
           <FontAwesome6 name="arrow-left" size={14} color="#6b7280" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>分类筛选</Text>
+        <Text style={styles.headerTitle}>{i18n.t('category_filter_title')}</Text>
         <TouchableOpacity
           style={styles.confirmButton}
           onPress={handleConfirmPress}
           activeOpacity={0.7}
         >
-          <Text style={styles.confirmButtonText}>确定</Text>
+          <Text style={styles.confirmButtonText}>{i18n.t('confirm')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -210,21 +220,21 @@ const CategoryFilterScreen = () => {
         {/* 已选条件展示区 */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>已选条件</Text>
+            <Text style={styles.sectionTitle}>{i18n.t('selected_filters')}</Text>
             <TouchableOpacity
               style={styles.clearAllButton}
               onPress={handleClearAllPress}
               activeOpacity={0.7}
             >
               <FontAwesome6 name="xmark" size={10} color="#6b7280" style={styles.clearAllIcon} />
-              <Text style={styles.clearAllText}>清空</Text>
+              <Text style={styles.clearAllText}>{i18n.t('clear')}</Text>
             </TouchableOpacity>
           </View>
           
           {selectedLanguages.length === 0 && selectedProjectTypes.length === 0 ? (
             <View style={styles.noSelectedFilters}>
               <FontAwesome6 name="filter" size={24} color="#6b7280" style={styles.noFiltersIcon} />
-              <Text style={styles.noFiltersText}>暂无筛选条件</Text>
+              <Text style={styles.noFiltersText}>{i18n.t('no_selected_filters')}</Text>
             </View>
           ) : (
             <View style={styles.selectedFiltersContainer}>
@@ -241,15 +251,15 @@ const CategoryFilterScreen = () => {
         {/* 编程语言筛选 */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>编程语言</Text>
-            <Text style={styles.sectionCount}>已选 {selectedLanguages.length} 项</Text>
+            <Text style={styles.sectionTitle}>{i18n.t('programming_languages')}</Text>
+            <Text style={styles.sectionCount}>{i18n.t('selected_count', { count: selectedLanguages.length })}</Text>
           </View>
           
           <View style={styles.searchContainer}>
             <FontAwesome6 name="magnifying-glass" size={14} color="#6b7280" style={styles.searchIcon} />
             <TextInput
               style={styles.searchInput}
-              placeholder="搜索编程语言..."
+              placeholder={i18n.t('search_languages_placeholder')}
               value={languageSearchTerm}
               onChangeText={setLanguageSearchTerm}
               placeholderTextColor="#9ca3af"
@@ -264,15 +274,15 @@ const CategoryFilterScreen = () => {
         {/* 项目类型筛选 */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>项目类型</Text>
-            <Text style={styles.sectionCount}>已选 {selectedProjectTypes.length} 项</Text>
+            <Text style={styles.sectionTitle}>{i18n.t('project_types')}</Text>
+            <Text style={styles.sectionCount}>{i18n.t('selected_count', { count: selectedProjectTypes.length })}</Text>
           </View>
           
           <View style={styles.searchContainer}>
             <FontAwesome6 name="magnifying-glass" size={14} color="#6b7280" style={styles.searchIcon} />
             <TextInput
               style={styles.searchInput}
-              placeholder="搜索项目类型..."
+              placeholder={i18n.t('search_project_types_placeholder')}
               value={projectTypeSearchTerm}
               onChangeText={setProjectTypeSearchTerm}
               placeholderTextColor="#9ca3af"
