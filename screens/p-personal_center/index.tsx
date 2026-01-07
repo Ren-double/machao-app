@@ -279,12 +279,6 @@ const PersonalCenterScreen = () => {
                 </View>
                 <View style={styles.userInfoText}>
                   <Text style={styles.userNickname}>{userData!.nickname}</Text>
-                  <Text style={styles.userJoinDate}>注册时间: {userData!.joinDateStr}</Text>
-                  <Text style={[styles.userJoinDate, { marginTop: 2 }]}>上次活跃: {userData!.lastActiveStr}</Text>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#10b981', marginRight: 6 }} />
-                    <Text style={{ fontSize: 12, color: '#10b981' }}>账号状态: 正常</Text>
-                  </View>
                 </View>
             <TouchableOpacity
               style={styles.editProfileButton}

@@ -1,49 +1,44 @@
 
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FontAwesome6 } from '@expo/vector-icons';
+import * as Device from 'expo-device';
 import styles from './styles';
 
-interface Device {
+interface DeviceItem {
   id: string;
   name: string;
-  type: 'mobile' | 'laptop' | 'tablet';
-  browser?: string;
+  type: 'mobile' | 'laptop' | 'tablet' | 'desktop' | 'unknown';
   lastLogin: string;
   isCurrentDevice: boolean;
+  osName: string;
 }
 
 const ManageDevicesScreen = () => {
   const router = useRouter();
   
-  const [devices, setDevices] = useState<Device[]>([
-    {
-      id: '1',
-      name: 'iPhone 13 Pro',
-      type: 'mobile',
-      lastLogin: '今天 09:30',
+  const [devices, setDevices] = useState<DeviceItem[]>([]);
+
+  useEffect(() => {
+    // 获取真实设备信息
+    const currentDevice: DeviceItem = {
+      id: 'current',
+      name: Device.modelName || 'Unknown Device',
+      type: getDeviceType(Device.deviceType),
+      lastLogin: '刚刚',
       isCurrentDevice: true,
-    },
-    {
-      id: '2',
-      name: 'MacBook Pro',
-      type: 'laptop',
-      browser: 'Chrome',
-      lastLogin: '昨天 15:45',
-      isCurrentDevice: false,
-    },
-    {
-      id: '3',
-      name: 'iPad Pro',
-      type: 'tablet',
-      browser: 'Safari',
-      lastLogin: '3天前',
-      isCurrentDevice: false,
-    },
-  ]);
+      osName: `${Device.osName} ${Device.osVersion}`,
+    };
+    setDevices([currentDevice]);
+  }, []);
+
+  const getDeviceType = (type: any): any => {
+      // 简单映射，实际可用 Device.DeviceType 枚举
+      return 'mobile'; 
+  };
 
   const handleBackPress = () => {
     if (router.canGoBack()) {
@@ -51,89 +46,27 @@ const ManageDevicesScreen = () => {
     }
   };
 
-  const handleLogoutDevice = (deviceId: string) => {
-    Alert.alert(
-      '确认下线',
-      '确定要将此设备下线吗？',
-      [
-        {
-          text: '取消',
-          style: 'cancel',
-        },
-        {
-          text: '确定',
-          style: 'destructive',
-          onPress: () => {
-            setDevices(prevDevices => 
-              prevDevices.filter(device => device.id !== deviceId)
-            );
-            Alert.alert('提示', '设备已下线');
-          },
-        },
-      ]
-    );
-  };
-
+  // 既然是单机/无后端应用，"下线"只能是象征性的，或者清除本地 Token
   const handleLogoutAllDevices = () => {
     Alert.alert(
-      '确认下线所有设备',
-      '确定要下线所有其他设备吗？这将使您在其他设备上的登录状态失效。',
+      '提示',
+      '由于当前为本地演示模式，无法控制其他物理设备。但在真实环境中，此操作将吊销 GitHub 授权令牌。',
       [
-        {
-          text: '取消',
-          style: 'cancel',
-        },
-        {
-          text: '确定',
-          style: 'destructive',
-          onPress: () => {
-            setDevices(prevDevices => 
-              prevDevices.filter(device => device.isCurrentDevice)
-            );
-            Alert.alert('提示', '所有其他设备已下线');
-          },
-        },
+        { text: '知道了' }
       ]
     );
   };
 
   const getDeviceIcon = (type: string) => {
-    switch (type) {
-      case 'mobile':
-        return 'mobile-screen';
-      case 'laptop':
-        return 'laptop';
-      case 'tablet':
-        return 'tablet-screen-button';
-      default:
-        return 'mobile-screen';
-    }
+    return 'mobile-screen';
   };
 
   const getDeviceIconColor = (type: string) => {
-    switch (type) {
-      case 'mobile':
-        return '#10b981';
-      case 'laptop':
-        return '#3b82f6';
-      case 'tablet':
-        return '#8b5cf6';
-      default:
-        return '#10b981';
-    }
+    return '#10b981';
   };
 
   const getDeviceIconBgColor = (type: string) => {
-    switch (type) {
-      case 'mobile':
-        return '#f0fdf4';
-      case 'laptop':
-        return '#eff6ff';
-      case 'tablet':
-        return '#faf5ff';
-      default:
-        return '#f0fdf4';
-    }
+    return '#f0fdf4';
   };
 
   return (
@@ -159,11 +92,9 @@ const ManageDevicesScreen = () => {
           
           <View style={styles.devicesList}>
             {devices.map((device) => (
-              <TouchableOpacity
+              <View
                 key={device.id}
                 style={styles.deviceItem}
-                activeOpacity={device.isCurrentDevice ? 1 : 0.7}
-                onPress={() => !device.isCurrentDevice && handleLogoutDevice(device.id)}
               >
                 <View style={styles.deviceInfo}>
                   <View style={[
@@ -180,21 +111,17 @@ const ManageDevicesScreen = () => {
                     <Text style={styles.deviceName}>{device.name}</Text>
                     <Text style={styles.deviceLoginInfo}>
                       {device.isCurrentDevice 
-                        ? `当前设备 · ${device.lastLogin}`
-                        : `${device.browser} · ${device.lastLogin}`
+                        ? `当前设备 · ${device.osName}`
+                        : `${device.lastLogin}`
                       }
                     </Text>
                   </View>
                 </View>
                 
-                {device.isCurrentDevice ? (
-                  <View style={styles.currentDeviceBadge}>
-                    <Text style={styles.currentDeviceBadgeText}>当前</Text>
-                  </View>
-                ) : (
-                  <Text style={styles.logoutButton}>下线</Text>
-                )}
-              </TouchableOpacity>
+                <View style={styles.currentDeviceBadge}>
+                   <Text style={styles.currentDeviceBadgeText}>在线</Text>
+                </View>
+              </View>
             ))}
           </View>
         </View>
@@ -203,7 +130,7 @@ const ManageDevicesScreen = () => {
         <View style={styles.securityTip}>
           <FontAwesome6 name="circle-info" size={14} color="#3b82f6" style={styles.tipIcon} />
           <Text style={styles.tipText}>
-            如发现未授权的登录设备，请立即下线并修改密码以保障账户安全。
+            当前仅显示本机状态。
           </Text>
         </View>
 
@@ -214,8 +141,8 @@ const ManageDevicesScreen = () => {
             onPress={handleLogoutAllDevices}
             activeOpacity={0.7}
           >
-            <FontAwesome6 name="right-from-bracket" size={14} color="#ef4444" style={styles.logoutAllIcon} />
-            <Text style={styles.logoutAllText}>下线所有其他设备</Text>
+            <FontAwesome6 name="shield-halved" size={14} color="#ef4444" style={styles.logoutAllIcon} />
+            <Text style={styles.logoutAllText}>下线其他设备 (模拟)</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

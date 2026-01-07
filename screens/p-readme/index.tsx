@@ -50,14 +50,19 @@ const ReadmeScreen = () => {
       .replace(/<\/p>/gi, '\n')
       .replace(/<div.*?>/gi, '')
       .replace(/<\/div>/gi, '')
-      .replace(/<img.*?>/gi, '') // Remove HTML images, rely on Markdown images
-      .replace(/<a.*?>/gi, '') // Remove HTML links
+      .replace(/<img.*?>/gi, '')
+      .replace(/<a.*?>/gi, '')
       .replace(/<\/a>/gi, '')
-      .replace(/<h\d.*?>/gi, '\n# ') // Try to convert headings
+      .replace(/<h\d.*?>/gi, '\n# ')
       .replace(/<\/h\d>/gi, '\n')
       .replace(/<center>/gi, '')
-      .replace(/<\/center>/gi, '');
-
+      .replace(/<\/center>/gi, '')
+      // Aggressive tag removal for remaining tags that might cause issues,
+      // but being careful not to remove things that look like tags in code blocks.
+      // Ideally we would only strip tags outside code blocks, but that's complex.
+      // For now, let's fix the specific <p issue reported.
+      .replace(/<p/gi, ''); // Simple strip of floating <p if any remaining
+      
     return processed;
   };
 

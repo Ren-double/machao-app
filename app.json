@@ -18,7 +18,7 @@
     "android": {
       "package": "com.machao.project715333040386",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/icon_max.png",
+        "foregroundImage": "./assets/images/iconplus.png",
         "backgroundColor": "#ffffff"
       },
       "permissions": [

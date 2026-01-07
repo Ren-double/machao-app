@@ -15,6 +15,8 @@ interface ProfileData {
   location: string;
   website: string;
   avatar: string;
+  joinDateStr?: string;
+  lastActiveStr?: string;
 }
 
 const EditProfileScreen = () => {
@@ -40,9 +42,30 @@ const EditProfileScreen = () => {
   const loadProfileData = async () => {
     try {
       const savedProfile = await AsyncStorage.getItem('@userProfile');
+      let extraData: Partial<ProfileData> = {};
+
+      // Load join date and last active
+      let joinDateStr = '';
+      let lastActiveStr = '';
+
+      if (savedProfile) {
+         const p = JSON.parse(savedProfile);
+         if (p.joinDate) joinDateStr = new Date(p.joinDate).toLocaleString();
+         if (p.lastActive) lastActiveStr = new Date(p.lastActive).toLocaleString();
+      }
+
+      if (!joinDateStr) {
+          const regDate = await AsyncStorage.getItem('@registrationDate');
+          if (regDate) joinDateStr = new Date(parseInt(regDate, 10)).toLocaleString();
+      }
+
       if (savedProfile) {
         const parsedProfile = JSON.parse(savedProfile);
-        setProfileData(parsedProfile);
+        setProfileData({
+            ...parsedProfile,
+            joinDateStr: joinDateStr || '未知',
+            lastActiveStr: lastActiveStr || '刚刚'
+        });
         if (parsedProfile.bio) {
           setBioCharacterCount(parsedProfile.bio.length);
         }
@@ -300,73 +323,30 @@ const EditProfileScreen = () => {
               </View>
             </View>
 
-            {/* 所在地输入框 */}
-            <View style={styles.inputGroup}>
-              <View style={styles.inputWrapper}>
-                <TextInput
-                  style={styles.textInput}
-                  value={profileData.location}
-                  onChangeText={handleLocationChange}
-                  placeholder="所在地"
-                  placeholderTextColor="#64748b"
-                />
-              </View>
-            </View>
-
-            {/* 个人网站输入框 */}
-            <View style={[styles.inputGroup, styles.lastInputGroup]}>
-              <View style={styles.inputWrapper}>
-                <TextInput
-                  style={styles.textInput}
-                  value={profileData.website}
-                  onChangeText={handleWebsiteChange}
-                  placeholder="个人网站"
-                  placeholderTextColor="#64748b"
-                  keyboardType="url"
-                  autoCapitalize="none"
-                />
-              </View>
-            </View>
-          </View>
-
-          {/* 附加信息 */}
-          <View style={styles.additionalInfoSection}>
-            <View style={styles.additionalInfoHeader}>
-              <FontAwesome6 name="circle-info" size={16} color="#3b82f6" />
-              <Text style={styles.additionalInfoTitle}>附加信息</Text>
-            </View>
-            
-            <View style={styles.infoList}>
-              <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>注册时间</Text>
-                <Text style={styles.infoValue}>2023年10月</Text>
-              </View>
-              
-              <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>最后活跃</Text>
-                <Text style={styles.infoValue}>刚刚</Text>
-              </View>
-              
-              <View style={[styles.infoItem, styles.lastInfoItem]}>
-                <Text style={styles.infoLabel}>账号状态</Text>
-                <View style={styles.statusBadge}>
-                  <Text style={styles.statusBadgeText}>正常</Text>
+            {/* 附加信息 (只读) */}
+            <View style={{ marginTop: 24, padding: 16, backgroundColor: '#f8fafc', borderRadius: 12 }}>
+                <Text style={{ fontSize: 16, fontWeight: '600', color: '#334155', marginBottom: 12 }}>账号信息</Text>
+                
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <Text style={{ color: '#64748b' }}>注册时间</Text>
+                    <Text style={{ color: '#334155', fontWeight: '500' }}>{profileData.joinDateStr}</Text>
                 </View>
-              </View>
+                
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <Text style={{ color: '#64748b' }}>上次活跃</Text>
+                    <Text style={{ color: '#334155', fontWeight: '500' }}>{profileData.lastActiveStr}</Text>
+                </View>
+
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                    <Text style={{ color: '#64748b' }}>账号状态</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#10b981', marginRight: 6 }} />
+                        <Text style={{ color: '#10b981', fontWeight: '500' }}>正常</Text>
+                    </View>
+                </View>
             </View>
           </View>
         </ScrollView>
-
-        {/* 底部操作栏 */}
-        <View style={styles.bottomActionBar}>
-          <TouchableOpacity
-            style={styles.cancelButton}
-            onPress={handleCancelPress}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.cancelButtonText}>取消</Text>
-          </TouchableOpacity>
-        </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
